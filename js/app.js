@@ -59,52 +59,72 @@ async function checkLogin() {
 
 function showLogin() {
 
-document.getElementById("authBox").classList.remove("hidden");
-document.getElementById("appShell").classList.add("hidden");
+    document.getElementById("authBox").classList.remove("hidden");
+    document.getElementById("appShell").classList.add("hidden");
     const auth = document.getElementById("authBox");
 
     auth.innerHTML = `
 
 <div class="wrap auth-layout">
 
-<div class="focus-card auth-card">
+    <div class="auth-hero">
 
-<h2 id="authTitle">
+        <span class="hero-badge">
+            Tutor Schedule
+        </span>
 
-تسجيل الدخول
+        <h1>
+            لوحة المدرس
+        </h1>
 
-</h2>
+        <p>
+            أدر مواعيدك بسهولة، أضف الطلاب، نظم الجلسات،
+            وتابع جدولك اليومي من أي جهاز.
+        </p>
 
-<form id="loginForm">
+    </div>
 
-<label>
+    <div class="focus-card auth-card">
 
-البريد الإلكتروني
+        <h2 id="authTitle">
+            تسجيل الدخول
+        </h2>
 
-</label>
+        <form id="loginForm">
+
+<label>البريد الإلكتروني</label>
 
 <input
 type="email"
 id="email"
 placeholder="example@email.com"
-required>
+required
+>
 
-<label>
-
-كلمة المرور
-
-</label>
+<label>كلمة المرور</label>
 
 <input
 type="password"
 id="password"
-required>
+required
+>
+
+<div id="confirmPasswordBox" style="display:none;">
+
+<label>تأكيد كلمة المرور</label>
+
+<input
+type="password"
+id="confirmPassword"
+>
+
+</div>
 
 <div class="modal-actions">
 
 <button
 type="button"
-class="btn"
+class="btn secondary"
 id="toggleBtn">
 
 إنشاء حساب
@@ -112,8 +132,8 @@ id="toggleBtn">
 </button>
 
 <button
-type="submit"
 class="btn"
+type="submit"
 id="submitBtn">
 
 دخول
@@ -124,9 +144,9 @@ id="submitBtn">
 
 </form>
 
-<div id="authMessage"></div>
+        <div class="status-msg" id="authMessage"></div>
 
-</div>
+    </div>
 
 </div>
 
@@ -151,19 +171,18 @@ function toggleAuthMode() {
     isRegister = !isRegister;
 
     document.getElementById("authTitle").innerText =
-        isRegister
-            ? "إنشاء حساب"
-            : "تسجيل الدخول";
+        isRegister ? "إنشاء حساب" : "تسجيل الدخول";
 
     document.getElementById("submitBtn").innerText =
-        isRegister
-            ? "إنشاء"
-            : "دخول";
+        isRegister ? "إنشاء" : "دخول";
 
     document.getElementById("toggleBtn").innerText =
         isRegister
             ? "العودة لتسجيل الدخول"
             : "إنشاء حساب";
+
+    document.getElementById("confirmPasswordBox").style.display =
+        isRegister ? "block" : "none";
 
     document.getElementById("authMessage").innerHTML = "";
 
@@ -232,7 +251,17 @@ async function register() {
 
     const msg =
         document.getElementById("authMessage");
+    const confirmPassword =
+        document.getElementById("confirmPassword").value;
 
+    if (password !== confirmPassword) {
+
+        msg.innerHTML =
+            "كلمتا المرور غير متطابقتين";
+
+        return;
+
+    }
     const { error } =
         await client.auth.signUp({
 
@@ -293,6 +322,8 @@ async function loadStudents() {
 
         updateStats();
 
+        renderFocusLists();
+
     }
 
     catch (err) {
@@ -333,6 +364,22 @@ function formatTimeTo12H(time) {
     const normalizedMinutes = String(minutes).padStart(2, "0");
 
     return `${normalizedHour}:${normalizedMinutes} ${suffix}`;
+
+}
+
+function sortSessionsByTime(sessions = []) {
+
+    return [...sessions].sort((a, b) => {
+
+        const aTime = String(a?.time || "23:59").split(":");
+        const bTime = String(b?.time || "23:59").split(":");
+
+        const aMinutes = Number(aTime[0]) * 60 + Number(aTime[1] || 0);
+        const bMinutes = Number(bTime[0]) * 60 + Number(bTime[1] || 0);
+
+        return aMinutes - bMinutes;
+
+    });
 
 }
 
@@ -378,6 +425,80 @@ function renderDayFilter() {
 
 }
 
+function renderFocusLists() {
+
+    const listMap = [
+        { id: "todayList", dayIndex: getTodayIndex() },
+        { id: "tomorrowList", dayIndex: (getTodayIndex() + 1) % 7 }
+    ];
+
+    listMap.forEach(({ id, dayIndex }) => {
+
+        const box = document.getElementById(id);
+
+        if (!box) return;
+
+        const matches = [];
+
+        students.forEach(student => {
+
+            sortSessionsByTime(student.sessions || []).forEach(session => {
+
+                if (Number(session.day) === dayIndex) {
+
+                    matches.push({
+                        name: student.name,
+                        time: session.time
+                    });
+
+                }
+
+            });
+
+        });
+
+        matches.sort((a, b) => {
+
+            const aMinutes = Number(String(a.time || "23:59").split(":")[0]) * 60 + Number(String(a.time || "23:59").split(":")[1] || 0);
+            const bMinutes = Number(String(b.time || "23:59").split(":")[0]) * 60 + Number(String(b.time || "23:59").split(":")[1] || 0);
+
+            return aMinutes - bMinutes;
+
+        });
+
+        box.innerHTML = "";
+
+        if (matches.length === 0) {
+
+            box.innerHTML = '<div class="empty">لا توجد مواعيد</div>';
+            return;
+
+        }
+
+        const list = document.createElement("div");
+        list.className = "schedule-list";
+
+        matches.forEach(item => {
+
+            const row = document.createElement("div");
+            row.className = "sess-row";
+            row.innerHTML = `
+
+                <span class="sess-name">${item.name}</span>
+                <span class="sess-time">${formatTimeTo12H(item.time)}</span>
+
+            `;
+
+            list.appendChild(row);
+
+        });
+
+        box.appendChild(list);
+
+    });
+
+}
+
 function renderDayView() {
 
     const container = document.getElementById("dayView");
@@ -394,7 +515,7 @@ function renderDayView() {
 
     students.forEach(student => {
 
-        (student.sessions || []).forEach(session => {
+        sortSessionsByTime(student.sessions || []).forEach(session => {
 
             if (Number(session.day) === currentDayIndex) {
 
@@ -408,6 +529,15 @@ function renderDayView() {
             }
 
         });
+
+    });
+
+    matchingSessions.sort((a, b) => {
+
+        const aMinutes = Number(String(a.time || "23:59").split(":")[0]) * 60 + Number(String(a.time || "23:59").split(":")[1] || 0);
+        const bMinutes = Number(String(b.time || "23:59").split(":")[0]) * 60 + Number(String(b.time || "23:59").split(":")[1] || 0);
+
+        return aMinutes - bMinutes;
 
     });
 
@@ -510,32 +640,41 @@ function renderStudents() {
 
         container.innerHTML =
 
-        `<div class="empty">
+            `<div class="empty empty-state">
 
-        لا يوجد طلاب
+        لا يوجد طلاب حتى الآن
 
         </div>`;
 
         renderDayFilter();
         renderDayView();
+        renderFocusLists();
         return;
 
     }
+
+    const todayIndex = getTodayIndex();
+    const tomorrowIndex = (todayIndex + 1) % 7;
 
     students.forEach(student => {
 
         const card =
             document.createElement("div");
 
-        card.className = "student-card";
+        const hasTodaySession = (student.sessions || []).some(session => Number(session.day) === todayIndex);
+        const hasTomorrowSession = (student.sessions || []).some(session => Number(session.day) === tomorrowIndex);
+
+        card.className = `student-card ${hasTodaySession ? "is-today" : ""} ${hasTomorrowSession ? "is-tomorrow" : ""}`;
 
         let sessionsHTML = "";
 
-        (student.sessions || []).forEach(session => {
+        sortSessionsByTime(student.sessions || []).forEach(session => {
+
+            const isCurrentDay = Number(session.day) === selectedDayIndex;
 
             sessionsHTML += `
 
-            <span class="pill">
+            <span class="pill ${isCurrentDay ? "pill-active" : ""}">
 
                 ${DAYS[Number(session.day)]}
 
@@ -547,13 +686,28 @@ function renderStudents() {
 
         });
 
+        const labels = [];
+
+        if (hasTodaySession) labels.push("اليوم");
+        if (hasTomorrowSession) labels.push("غدًا");
+
+        const statusHTML = labels.length
+            ? `<div class="student-meta">${labels.map(label => `<span class="day-badge">${label}</span>`).join("")}</div>`
+            : `<div class="student-meta"><span class="day-badge muted">بدون جلسات قريبة</span></div>`;
+
         card.innerHTML = `
 
 <div class="student-head">
 
+<div class="student-name-wrap">
+
 <div class="student-name">
 
 ${student.name}
+
+</div>
+
+${statusHTML}
 
 </div>
 
@@ -593,6 +747,7 @@ ${sessionsHTML}
 
     renderDayFilter();
     renderDayView();
+    renderFocusLists();
 
 }
 // ======================================
@@ -678,13 +833,27 @@ function createSessionRow(session = {}) {
 
 <div class="session-row">
 
-<select class="sessionDay">
+<button
+type="button"
+class="removeSession" style="width: 52px; min-width: 52px;">
+
+×
+
+</button>
+
+<input
+type="time"
+class="sessionTime"
+value="${session.time || "09:00"}"
+style="width: 180px; min-width: 180px;">
+
+<select class="sessionDay" style="width: 220px; min-width: 220px; max-width: 100%;">
 
 ${DAYS.map((day, index) => `
 
 <option value="${index}"
 
-${Number(session.day)===index?"selected":""}>
+${Number(session.day) === index ? "selected" : ""}>
 
 ${day}
 
@@ -693,19 +862,6 @@ ${day}
 `).join("")}
 
 </select>
-
-<input
-type="time"
-class="sessionTime"
-value="${session.time || "09:00"}">
-
-<button
-type="button"
-class="removeSession">
-
-×
-
-</button>
 
 </div>
 
