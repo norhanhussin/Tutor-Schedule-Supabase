@@ -26,6 +26,7 @@ body {
     font-family: 'Tajawal', sans-serif;
     min-height: 100vh;
     padding: 28px 16px 60px;
+    overflow-x: hidden;
 }
 
 .auth-layout {
@@ -66,6 +67,7 @@ body {
 
 .wrap {
     max-width: 920px;
+    width: min(100%, 920px);
     margin: 0 auto;
 }
 
@@ -205,6 +207,11 @@ h1 {
 }
 
 @media (max-width:600px) {
+    .wrap {
+        max-width: 100%;
+        padding-inline: 2px;
+    }
+
     .focus-grid {
         grid-template-columns: 1fr;
     }
@@ -220,6 +227,98 @@ h1 {
 
     .auth-hero {
         padding: 12px 4px;
+    }
+
+    .student-head {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .student-actions {
+        width: 100%;
+        justify-content: flex-end;
+    }
+
+    .student-card {
+        padding: 14px 12px;
+    }
+
+    .student-sessions {
+        gap: 6px;
+    }
+
+    .pill {
+        flex: 1 1 calc(50% - 6px);
+        text-align: center;
+    }
+
+    .modal {
+        max-width: 100%;
+        padding: 18px 14px 16px;
+        border-radius: 18px;
+    }
+
+    .modal-actions {
+        flex-direction: column;
+    }
+
+    .session-row {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .session-row input[type="time"],
+    .session-row select {
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+        flex: 1 1 100%;
+    }
+
+    .removeSession {
+        width: 48px !important;
+        min-width: 48px !important;
+        flex: 0 0 48px;
+    }
+
+    .add-bar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .add-bar .btn {
+        width: 100%;
+    }
+
+    #logoutBtn {
+        margin-right: 0 !important;
+        margin-top: 10px;
+    }
+}
+
+@media (max-width:420px) {
+    body {
+        padding-inline: 10px;
+    }
+
+    .auth-hero h1 {
+        font-size: 34px;
+    }
+
+    .focus-card,
+    .day-view {
+        padding: 14px 12px;
+    }
+
+    .sess-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+
+    .tab {
+        flex: 1 1 calc(33.333% - 10px);
+        min-width: 0;
     }
 }
 
