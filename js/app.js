@@ -474,6 +474,11 @@ function renderDayFilter() {
             renderDayFilter();
             renderDayView();
 
+            document.getElementById("dayView")?.scrollIntoView({
+                behavior: "smooth",
+                block: "start"
+            });
+
         };
 
     });

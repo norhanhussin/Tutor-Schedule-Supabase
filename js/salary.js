@@ -1,6 +1,8 @@
 let salaryStudents = [];
 let salaryDate = new Date();
 let salaryMonth = new Date();
+let selectedStudentId = "all";
+let monthlySort = "name";
 
 const salaryDays = [
     "السبت",
@@ -38,9 +40,19 @@ async function initializeSalary() {
         salaryMonth = fromMonthKey(event.target.value);
         renderMonthlySummary();
     };
+    document.getElementById("studentFilter").onchange = event => {
+        selectedStudentId = event.target.value;
+        renderSalary();
+    };
+    document.getElementById("monthlySort").onchange = event => {
+        monthlySort = event.target.value;
+        renderMonthlySummary();
+    };
+    document.getElementById("exportMonthlyBtn").onclick = exportMonthlyReport;
 
     try {
         salaryStudents = await getStudents();
+        renderStudentFilter();
         renderSalary();
     } catch (error) {
         showSalaryStatus(error.message);
@@ -92,12 +104,21 @@ function getSessionPrice(session) {
         : Math.max(0, Number(session.price) || 0);
 }
 
+function renderStudentFilter() {
+    const filter = document.getElementById("studentFilter");
+    filter.innerHTML = '<option value="all">كل الطلاب</option>' + salaryStudents
+        .map(student => `<option value="${escapeHTML(student.id)}">${escapeHTML(student.name)}</option>`)
+        .join("");
+    filter.value = selectedStudentId;
+}
+
 function getDailySessions() {
     const dayIndex = getDateDayIndex(salaryDate);
     const dateKey = toDateKey(salaryDate);
     const sessions = [];
 
     salaryStudents.forEach(student => {
+        if (selectedStudentId !== "all" && String(student.id) !== String(selectedStudentId)) return;
         (student.sessions || []).forEach((session, sessionIndex) => {
             if (session.date === dateKey || (!session.date && Number(session.day) === dayIndex)) {
                 sessions.push({ student, session, sessionIndex, dateKey });
@@ -122,7 +143,7 @@ function renderSalary() {
     sessions.forEach(item => {
         const attended = Boolean(item.session.attendance?.[dateKey]);
         const price = getSessionPrice(item.session);
-        if (attended) {
+        if (attended && status !== "cancelled") {
             completed++;
             total += price;
         }
@@ -135,7 +156,7 @@ function renderSalary() {
                 <span class="checkmark">✓</span>
                 <span>
                     <strong>${escapeHTML(item.student.name)}</strong>
-                    <small>${formatTime(item.session.time)}</small>
+                    <small>${formatTime(item.session.time)}${item.session.extra ? " · جلسة إضافية" : ""}</small>
                 </span>
             </label>
             <label class="price-control">
@@ -199,12 +220,27 @@ async function addExtraSession(event) {
 function renderMonthlySummary() {
     const container = document.getElementById("monthlySummary");
     if (!container) return;
-    const monthKey = toMonthKey(salaryMonth);
-    const year = salaryMonth.getFullYear();
-    const month = salaryMonth.getMonth();
+    const summaries = getMonthlySummaries(salaryMonth);
+    const monthTotal = summaries.reduce((sum, row) => sum + row.total, 0);
+    const rows = summaries
+        .filter(row => selectedStudentId === "all" || String(row.id) === String(selectedStudentId))
+        .sort((a, b) => monthlySort === "total" ? b.total - a.total : monthlySort === "count" ? b.count - a.count : a.name.localeCompare(b.name, "ar"))
+        .map(row => `<div class="monthly-row"><strong>${escapeHTML(row.name)}</strong><span>${row.count} جلسة</span><b>${row.total.toLocaleString("ar-EG")} ج.م</b></div>`)
+        .join("");
+
+    container.innerHTML = rows
+        ? `<div class="monthly-total">إجمالي الشهر: <strong>${monthTotal.toLocaleString("ar-EG")} ج.م</strong></div>${rows}`
+        : '<div class="empty empty-state">لا يوجد طلاب حتى الآن</div>';
+    renderMonthComparison(monthTotal);
+}
+
+function getMonthlySummaries(date) {
+    const monthKey = toMonthKey(date);
+    const year = date.getFullYear();
+    const month = date.getMonth();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
-    let monthTotal = 0;
-    const rows = salaryStudents.map(student => {
+
+    return salaryStudents.map(student => {
         let count = 0;
         let total = 0;
         (student.sessions || []).forEach(session => {
@@ -223,13 +259,27 @@ function renderMonthlySummary() {
                 }
             }
         });
-        monthTotal += total;
-        return `<div class="monthly-row"><strong>${escapeHTML(student.name)}</strong><span>${count} جلسة</span><b>${total.toLocaleString("ar-EG")} ج.م</b></div>`;
-    }).join("");
+        return { id: student.id, name: student.name, count, total };
+    });
+}
 
-    container.innerHTML = rows
-        ? `<div class="monthly-total">إجمالي الشهر: <strong>${monthTotal.toLocaleString("ar-EG")} ج.م</strong></div>${rows}`
-        : '<div class="empty empty-state">لا يوجد طلاب حتى الآن</div>';
+function renderMonthComparison(currentTotal) {
+    const previousMonth = new Date(salaryMonth.getFullYear(), salaryMonth.getMonth() - 1, 1);
+    const previousTotal = getMonthlySummaries(previousMonth).reduce((sum, row) => sum + row.total, 0);
+    const difference = currentTotal - previousTotal;
+    const direction = difference > 0 ? "زيادة" : difference < 0 ? "نقصان" : "بدون تغيير";
+    document.getElementById("monthComparison").innerHTML = `الشهر السابق: <strong>${previousTotal.toLocaleString("ar-EG")} ج.م</strong> · ${direction}: <strong>${Math.abs(difference).toLocaleString("ar-EG")} ج.م</strong>`;
+}
+
+function exportMonthlyReport() {
+    const rows = getMonthlySummaries(salaryMonth)
+        .filter(row => selectedStudentId === "all" || String(row.id) === String(selectedStudentId));
+    const csv = ["الطالب,عدد الجلسات,الإجمالي (ج.م)", ...rows.map(row => `"${row.name.replace(/"/g, '""')}",${row.count},${row.total}`)].join("\n");
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" }));
+    link.download = `salary-${toMonthKey(salaryMonth)}.csv`;
+    link.click();
+    URL.revokeObjectURL(link.href);
 }
 
 async function saveSalaryEntry(item, row) {

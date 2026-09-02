@@ -31,6 +31,20 @@
             <div class="stat-card"><span class="stat-label">إجمالي اليوم</span><strong class="stat-value" id="dailyTotalStat">0 ج.م</strong></div>
         </section>
 
+        <section class="salary-tools">
+            <label>عرض الطالب
+                <select id="studentFilter"><option value="all">كل الطلاب</option></select>
+            </label>
+            <label>ترتيب
+                <select id="monthlySort">
+                    <option value="name">حسب الاسم</option>
+                    <option value="total">حسب الإجمالي</option>
+                    <option value="count">حسب عدد الجلسات</option>
+                </select>
+            </label>
+            <button class="btn secondary" id="exportMonthlyBtn" type="button">تصدير تقرير الشهر</button>
+        </section>
+
         <section class="salary-list" id="salaryList"></section>
         <div class="status-msg" id="salaryStatus"></div>
 
@@ -51,6 +65,7 @@
                 <label for="salaryMonth">الشهر</label>
                 <input id="salaryMonth" type="month" aria-label="شهر الحساب">
             </div>
+            <div class="month-comparison" id="monthComparison"></div>
             <div class="monthly-summary" id="monthlySummary"></div>
         </section>
     </main>
