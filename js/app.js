@@ -6,6 +6,7 @@ let students = [];
 let currentUser = null;
 let isRegister = false;
 let editingId = null;
+let editingStudent = null;
 let selectedDayIndex = null;
 
 const DAYS = [
@@ -670,13 +671,14 @@ function renderStudents() {
 
         sortSessionsByTime(student.sessions || []).forEach(session => {
 
-            const isCurrentDay = Number(session.day) === selectedDayIndex;
+            const isExtraSession = Boolean(session.date);
+            const isCurrentDay = !isExtraSession && Number(session.day) === selectedDayIndex;
 
             sessionsHTML += `
 
             <span class="pill ${isCurrentDay ? "pill-active" : ""}">
 
-                ${DAYS[Number(session.day)]}
+                ${isExtraSession ? "جلسة إضافية" : DAYS[Number(session.day)]}
 
                 ${formatTimeTo12H(session.time)}
 
@@ -820,6 +822,7 @@ function closeModal() {
     document.getElementById("modalRoot").innerHTML = "";
 
     editingId = null;
+    editingStudent = null;
 
 }
 
@@ -827,11 +830,11 @@ function closeModal() {
 // SESSION ROW
 // ======================================
 
-function createSessionRow(session = {}) {
+function createSessionRow(session = {}, sessionIndex = "") {
 
     return `
 
-<div class="session-row">
+<div class="session-row" data-session-index="${sessionIndex}">
 
 <button
 type="button"
@@ -875,6 +878,7 @@ ${day}
 function openModal(student = null) {
 
     editingId = student ? student.id : null;
+    editingStudent = student;
 
     const sessions =
         student?.sessions?.length
@@ -910,7 +914,7 @@ required>
 
 <div id="sessionsContainer">
 
-${sessions.map(session => createSessionRow(session)).join("")}
+            ${sessions.map((session, index) => createSessionRow(session, student ? index : "")).join("")}
 
 </div>
 
@@ -1013,6 +1017,11 @@ async function saveStudent(e) {
         .querySelectorAll(".session-row")
         .forEach(row => {
 
+            const originalIndex = row.dataset.sessionIndex;
+            const originalSession = originalIndex === ""
+                ? null
+                : editingStudent?.sessions?.[Number(originalIndex)];
+
             const day =
                 Number(
                     row.querySelector(".sessionDay").value
@@ -1024,11 +1033,9 @@ async function saveStudent(e) {
             if (time) {
 
                 sessions.push({
-
+                    ...(originalSession || {}),
                     day,
-
                     time
-
                 });
 
             }

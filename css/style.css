@@ -587,8 +587,305 @@ h1 {
 
 .add-bar {
     display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
     justify-content: center;
     margin: 8px 0 34px;
+}
+
+.salary-shell {
+    padding-bottom: 40px;
+}
+
+.salary-header {
+    position: relative;
+}
+
+.back-link {
+    position: absolute;
+    top: 8px;
+    right: 0;
+    color: var(--gold);
+    font-weight: 700;
+    text-decoration: none;
+    border-bottom: 1px solid rgba(214, 163, 76, 0.45);
+    padding-bottom: 3px;
+}
+
+.back-link:hover {
+    color: var(--ink);
+}
+
+.salary-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin: 22px 0 14px;
+}
+
+.salary-toolbar input {
+    width: 210px;
+    margin: 0;
+    background: rgba(14, 24, 19, 0.85);
+    border: 1px solid rgba(214, 163, 76, 0.45);
+    color: var(--ink);
+    color-scheme: dark;
+    text-align: center;
+    font-weight: 700;
+}
+
+.salary-shell input[type="date"],
+.salary-shell input[type="month"] {
+    min-height: 48px;
+    background: rgba(14, 24, 19, 0.85);
+    border: 1px solid rgba(214, 163, 76, 0.45);
+    color: var(--ink);
+    color-scheme: dark;
+    font-family: 'Cairo', 'Tajawal', sans-serif;
+    font-weight: 700;
+}
+
+.salary-shell input[type="date"]::-webkit-calendar-picker-indicator,
+.salary-shell input[type="month"]::-webkit-calendar-picker-indicator {
+    width: 22px;
+    height: 22px;
+    padding: 2px;
+    filter: invert(0.8) sepia(1) saturate(0.7) hue-rotate(20deg);
+    cursor: pointer;
+}
+
+.salary-date-title {
+    color: var(--gold);
+    font-family: 'Cairo', sans-serif;
+    font-size: 22px;
+    font-weight: 700;
+    text-align: center;
+    margin: 10px 0 18px;
+}
+
+.salary-stats {
+    margin-top: 0;
+}
+
+.salary-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.salary-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    align-items: center;
+    gap: 16px;
+    background: linear-gradient(180deg, rgba(36, 71, 58, 0.96), rgba(22, 37, 30, 0.94));
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 14px 16px;
+    transition: border-color .15s ease, background .15s ease;
+}
+
+.salary-row.is-completed {
+    border-color: rgba(127, 169, 143, 0.65);
+    background: linear-gradient(180deg, rgba(44, 83, 67, 0.96), rgba(25, 49, 39, 0.94));
+}
+
+.attendance-control {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0;
+    cursor: pointer;
+}
+
+.attendance-control input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.checkmark {
+    display: grid;
+    place-items: center;
+    width: 28px;
+    height: 28px;
+    border: 2px solid var(--sage);
+    border-radius: 8px;
+    color: transparent;
+    font-size: 18px;
+    transition: all .15s ease;
+}
+
+.attendance-control input:checked + .checkmark {
+    color: #17251d;
+    background: var(--sage);
+    border-color: var(--sage);
+}
+
+.attendance-control strong,
+.attendance-control small {
+    display: block;
+}
+
+.attendance-control strong {
+    color: var(--ink);
+    font-family: 'Cairo', sans-serif;
+    font-size: 16px;
+}
+
+.attendance-control small {
+    color: var(--gold);
+    font-size: 13px;
+    margin-top: 2px;
+}
+
+.price-control {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin: 0;
+    color: var(--ink-dim);
+    white-space: nowrap;
+    font-size: 13px;
+}
+
+.price-control input {
+    width: 100px;
+    margin: 0;
+    padding: 9px 10px;
+    border-radius: 9px;
+    background: rgba(248, 244, 236, 0.97);
+    border: 1px solid rgba(214, 163, 76, 0.36);
+    color: #1c2b24;
+    font-family: 'Tajawal', sans-serif;
+    text-align: center;
+}
+
+.save-salary {
+    color: var(--gold);
+    border-color: rgba(214, 163, 76, 0.45);
+}
+
+.salary-login {
+    min-height: calc(100vh - 100px);
+    display: grid;
+    place-items: center;
+}
+
+.salary-login .focus-card {
+    width: min(100%, 440px);
+    text-align: center;
+}
+
+.salary-login h2 {
+    font-family: 'Cairo', sans-serif;
+    margin-bottom: 18px;
+}
+
+.extra-session-card {
+    margin-top: 28px;
+}
+
+.extra-session-card h2 {
+    font-family: 'Cairo', sans-serif;
+    font-size: 20px;
+    margin-bottom: 16px;
+}
+
+.extra-session-form {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    align-items: end;
+    gap: 10px;
+}
+
+.extra-session-form label:first-child,
+.extra-session-form .btn {
+    grid-column: 1 / -1;
+}
+
+.extra-session-form label {
+    margin: 0;
+    color: var(--ink-dim);
+    font-size: 13px;
+}
+
+.extra-session-form input {
+    margin: 7px 0 0;
+    padding: 10px;
+    border-radius: 9px;
+    min-height: 48px;
+    background: rgba(14, 24, 19, 0.85);
+    border: 1px solid rgba(214, 163, 76, 0.45);
+    color: var(--ink);
+    color-scheme: dark;
+    font-family: 'Tajawal', sans-serif;
+}
+
+.extra-session-form .btn {
+    white-space: nowrap;
+}
+
+.monthly-section {
+    margin-top: 30px;
+}
+
+.month-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.month-toolbar label {
+    margin: 0;
+    color: var(--ink-dim);
+    font-size: 14px;
+}
+
+.month-toolbar input {
+    width: 180px;
+    margin: 0;
+    padding: 10px;
+}
+
+.monthly-summary {
+    overflow: hidden;
+    background: rgba(17, 29, 23, 0.55);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+}
+
+.monthly-total,
+.monthly-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 16px;
+    align-items: center;
+    padding: 13px 16px;
+    border-bottom: 1px solid var(--line);
+}
+
+.monthly-total {
+    display: block;
+    color: var(--ink-dim);
+    background: rgba(214, 163, 76, 0.08);
+}
+
+.monthly-total strong,
+.monthly-row b {
+    color: var(--gold);
+}
+
+.monthly-row span {
+    color: var(--ink-dim);
+    font-size: 13px;
+}
+
+.monthly-row:last-child {
+    border-bottom: none;
 }
 
 /* modal / form */
@@ -737,6 +1034,67 @@ select:focus {
     margin-bottom: 0;
     width: 100%;
 }
+    .back-link {
+        position: static;
+        display: inline-block;
+        margin-bottom: 14px;
+    }
+
+    .salary-toolbar {
+        flex-wrap: wrap;
+    }
+
+    .salary-toolbar input {
+        order: -1;
+        width: 100%;
+    }
+
+    .salary-row {
+        grid-template-columns: 1fr auto;
+        gap: 12px;
+    }
+
+    .price-control {
+        grid-column: 1 / -1;
+        justify-content: flex-start;
+    }
+
+    .save-salary {
+        grid-column: 2;
+        grid-row: 1;
+    }
+
+    .extra-session-form {
+        grid-template-columns: 1fr;
+    }
+
+    .extra-session-form label,
+    .extra-session-form .btn {
+        grid-column: 1 / -1;
+    }
+
+    .extra-session-form .btn {
+        width: 100%;
+    }
+
+    .month-toolbar input {
+        flex: 1;
+    }
+
+    .monthly-row {
+        grid-template-columns: 1fr auto;
+        gap: 6px 12px;
+    }
+
+    .monthly-row span {
+        grid-column: 1;
+        grid-row: 2;
+    }
+
+    .monthly-row b {
+        grid-column: 2;
+        grid-row: 1 / span 2;
+    }
 
 .session-row input,
 .session-row select {

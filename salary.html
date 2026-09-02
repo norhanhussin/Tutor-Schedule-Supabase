@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>حساب السالاري | دفتر مواعيدي</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@500;700;800&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <main id="salaryShell" class="wrap salary-shell hidden">
+        <header class="salary-header">
+            <a class="back-link" href="index.html">العودة للجدول</a>
+            <h1>حساب السالاري</h1>
+            <div class="today-date">سجّلي الجلسات التي تمت، والسعر الخاص بكل جلسة</div>
+        </header>
+
+        <section class="salary-toolbar" aria-label="اختيار التاريخ">
+            <button class="icon-btn" id="previousDateBtn" type="button">اليوم السابق</button>
+            <input id="salaryDate" type="date" aria-label="تاريخ الحساب">
+            <button class="icon-btn" id="nextDateBtn" type="button">اليوم التالي</button>
+        </section>
+
+        <div class="salary-date-title" id="salaryDateTitle"></div>
+
+        <section class="stats-grid salary-stats">
+            <div class="stat-card"><span class="stat-label">جلسات اليوم</span><strong class="stat-value" id="salarySessionsStat">0</strong></div>
+            <div class="stat-card"><span class="stat-label">الجلسات المنفذة</span><strong class="stat-value" id="completedSessionsStat">0</strong></div>
+            <div class="stat-card"><span class="stat-label">إجمالي اليوم</span><strong class="stat-value" id="dailyTotalStat">0 ج.م</strong></div>
+        </section>
+
+        <section class="salary-list" id="salaryList"></section>
+        <div class="status-msg" id="salaryStatus"></div>
+
+        <section class="focus-card extra-session-card">
+            <h2>إضافة جلسة إضافية أو تجريبية</h2>
+            <form id="extraSessionForm" class="extra-session-form">
+                <label>اسم الطالب<input id="extraStudentName" type="text" required placeholder="اكتبي اسم الطالب"></label>
+                <label>التاريخ<input id="extraSessionDate" type="date" required></label>
+                <label>الوقت<input id="extraSessionTime" type="time" value="09:00" required></label>
+                <label>السعر<input id="extraSessionPrice" type="number" min="0" step="10" value="80" required inputmode="decimal"></label>
+                <button class="btn" type="submit">إضافة وحساب الجلسة</button>
+            </form>
+        </section>
+
+        <section class="monthly-section">
+            <div class="section-title"><span class="dot"></span>حساب الشهر</div>
+            <div class="month-toolbar">
+                <label for="salaryMonth">الشهر</label>
+                <input id="salaryMonth" type="month" aria-label="شهر الحساب">
+            </div>
+            <div class="monthly-summary" id="monthlySummary"></div>
+        </section>
+    </main>
+
+    <div id="salaryLogin" class="wrap salary-login hidden">
+        <div class="focus-card">
+            <h2>يجب تسجيل الدخول أولًا</h2>
+            <a class="btn" href="index.html">الذهاب لتسجيل الدخول</a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/salary.js"></script>
+</body>
+</html>
