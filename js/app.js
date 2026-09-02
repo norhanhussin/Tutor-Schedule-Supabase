@@ -54,6 +54,60 @@ async function checkLogin() {
 
 }
 
+function showMessage(message, title = "تنبيه") {
+    const modal = document.getElementById("modalRoot");
+
+    modal.innerHTML = `
+        <div class="overlay message-overlay">
+            <div class="modal message-modal" role="dialog" aria-modal="true">
+                <h2>${title}</h2>
+                <p class="message-text">${escapeHTML(message)}</p>
+                <div class="modal-actions">
+                    <button type="button" class="btn" id="messageCloseBtn">حسنًا</button>
+                </div>
+            </div>
+        </div>
+    `;
+
+    document.getElementById("messageCloseBtn").onclick = closeModal;
+}
+
+function showConfirm(message, title = "تأكيد العملية") {
+    return new Promise(resolve => {
+        const modal = document.getElementById("modalRoot");
+
+        modal.innerHTML = `
+            <div class="overlay message-overlay">
+                <div class="modal message-modal" role="dialog" aria-modal="true">
+                    <h2>${title}</h2>
+                    <p class="message-text">${escapeHTML(message)}</p>
+                    <div class="modal-actions">
+                        <button type="button" class="btn secondary" id="confirmCancelBtn">إلغاء</button>
+                        <button type="button" class="btn danger-btn" id="confirmOkBtn">حذف</button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        const finish = result => {
+            closeModal();
+            resolve(result);
+        };
+
+        document.getElementById("confirmCancelBtn").onclick = () => finish(false);
+        document.getElementById("confirmOkBtn").onclick = () => finish(true);
+    });
+}
+
+function escapeHTML(value) {
+    return String(value).replace(/[&<>'"]/g, character => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "'": "&#39;",
+        '"': "&quot;"
+    }[character]));
+}
 // ======================================
 // LOGIN UI
 // ======================================
@@ -758,7 +812,7 @@ ${sessionsHTML}
 
 async function removeStudent(id) {
 
-    if (!confirm("هل تريد حذف الطالب؟"))
+    if (!await showConfirm("هل تريد حذف الطالب؟"))
         return;
 
     try {
@@ -771,7 +825,7 @@ async function removeStudent(id) {
 
     catch (err) {
 
-        alert(err.message);
+    showMessage(err.message, "حدث خطأ");
 
     }
 
@@ -1005,7 +1059,7 @@ async function saveStudent(e) {
 
     if (!name) {
 
-        alert("اكتبي اسم الطالب");
+    showMessage("اكتبي اسم الطالب", "بيانات ناقصة");
 
         return;
 
@@ -1044,7 +1098,7 @@ async function saveStudent(e) {
 
     if (sessions.length === 0) {
 
-        alert("أضيفي ميعاد واحد على الأقل");
+    showMessage("أضيفي ميعاد واحد على الأقل", "بيانات ناقصة");
 
         return;
 
@@ -1087,7 +1141,7 @@ async function saveStudent(e) {
 
         console.error(err);
 
-        alert(err.message);
+    showMessage(err.message, "حدث خطأ");
 
     }
 

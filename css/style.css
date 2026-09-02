@@ -920,6 +920,37 @@ h1 {
     letter-spacing: 0.5px;
 }
 
+.message-modal {
+    max-width: 430px;
+    text-align: center;
+    padding: 26px 24px 22px;
+}
+
+.message-modal h2 {
+    font-size: 24px;
+    margin-bottom: 10px;
+}
+
+.message-text {
+    color: var(--ink-dim);
+    font-size: 16px;
+    line-height: 1.8;
+    overflow-wrap: anywhere;
+}
+
+.message-modal .modal-actions {
+    margin-top: 20px;
+}
+
+.message-modal .modal-actions .btn {
+    flex: 1;
+}
+
+.danger-btn {
+    background: var(--rose);
+    color: #fff5ed;
+}
+
 label {
     font-size: 16px;
     color: var(--ink);
