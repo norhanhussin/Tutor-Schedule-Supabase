@@ -60,6 +60,11 @@
         </div>
     </div>
 
+    <div class="notification-bar">
+        <button class="btn secondary" id="notificationsBtn" type="button">تفعيل إشعارات المواعيد</button>
+        <span id="notificationStatus" role="status" aria-live="polite"></span>
+    </div>
+
     <div class="section-title" id="dayViewSection">
         <span class="dot"></span>
         فلتر الأيام
@@ -97,6 +102,13 @@
             الطلاب
         </div>
 
+        <div class="students-toolbar">
+            <label class="search-field" for="studentSearch">
+                <span>بحث عن طالب</span>
+                <input id="studentSearch" type="search" placeholder="اكتبي اسم الطالب" autocomplete="off">
+            </label>
+        </div>
+
         <div class="student-list" id="studentList"></div>
 
         <div class="add-bar">
@@ -111,6 +123,15 @@
             <button class="btn" id="logoutBtn" style="margin-right: 12px;">
                 تسجيل الخروج
             </button>
+
+            <button class="btn secondary" id="exportBackupBtn" type="button">
+                تصدير نسخة احتياطية
+            </button>
+
+            <label class="btn secondary backup-import-label" for="importBackupInput">
+                استيراد نسخة احتياطية
+                <input id="importBackupInput" type="file" accept="application/json" hidden>
+            </label>
         </div>
 
         <div class="status-msg" id="statusMsg"></div>
@@ -120,6 +141,8 @@
 </div>
 
 <div id="modalRoot"></div>
+
+<button class="back-to-top" id="backToTop" type="button" aria-label="العودة إلى أعلى الصفحة">↑</button>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 

@@ -8,6 +8,10 @@ let isRegister = false;
 let editingId = null;
 let editingStudent = null;
 let selectedDayIndex = null;
+let studentSearchQuery = "";
+let appStatusTimer;
+let notificationTimer;
+const notifiedSessions = new Set();
 
 const DAYS = [
     "السبت",
@@ -25,9 +29,17 @@ const DAYS = [
 
 window.onload = async () => {
 
+    setupBackToTop();
     await checkLogin();
 
 };
+
+function setupBackToTop() {
+    const button = document.getElementById("backToTop");
+    if (!button) return;
+    window.addEventListener("scroll", () => button.classList.toggle("is-visible", window.scrollY > 420));
+    button.onclick = () => window.scrollTo({ top: 0, behavior: "smooth" });
+}
 
 // ======================================
 // CHECK LOGIN
@@ -70,6 +82,16 @@ function showMessage(message, title = "تنبيه") {
     `;
 
     document.getElementById("messageCloseBtn").onclick = closeModal;
+}
+
+function setAppStatus(message, isError = false) {
+    const status = document.getElementById("statusMsg");
+    if (!status) return;
+    clearTimeout(appStatusTimer);
+    status.textContent = message;
+    status.classList.toggle("is-error", isError);
+    status.classList.add("is-visible");
+    appStatusTimer = setTimeout(() => status.classList.remove("is-visible"), 3500);
 }
 
 function showConfirm(message, title = "تأكيد العملية") {
@@ -250,11 +272,20 @@ function toggleAuthMode() {
 async function submitAuth(e) {
 
     e.preventDefault();
+    const submitButton = document.getElementById("submitBtn");
+    const originalText = submitButton.innerText;
+    submitButton.disabled = true;
+    submitButton.innerText = "جاري التنفيذ...";
 
-    if (isRegister)
-        await register();
-    else
-        await login();
+    try {
+        if (isRegister)
+            await register();
+        else
+            await login();
+    } finally {
+        submitButton.disabled = false;
+        submitButton.innerText = originalText;
+    }
 
 }
 
@@ -349,6 +380,16 @@ function showApp() {
     document.getElementById("appShell").classList.remove("hidden");
 
     document.getElementById("logoutBtn").onclick = logout;
+    document.getElementById("studentSearch").oninput = event => {
+        studentSearchQuery = event.target.value.trim().toLocaleLowerCase();
+        renderStudents();
+    };
+    document.getElementById("exportBackupBtn").onclick = exportBackup;
+    document.getElementById("importBackupInput").onchange = importBackup;
+    document.getElementById("notificationsBtn").onclick = enableNotifications;
+    updateNotificationStatus();
+    notificationTimer = setInterval(checkUpcomingSessions, 60000);
+    checkUpcomingSessions();
 
 }
 
@@ -371,6 +412,8 @@ async function loadStudents() {
 
     try {
 
+        setAppStatus("جاري تحميل البيانات...");
+
         students = await getStudents();
 
         renderStudents();
@@ -378,12 +421,14 @@ async function loadStudents() {
         updateStats();
 
         renderFocusLists();
+        setAppStatus("تم تحديث البيانات");
 
     }
 
     catch (err) {
 
         console.error(err);
+        setAppStatus("تعذر تحميل البيانات", true);
 
     }
 
@@ -544,7 +589,7 @@ function renderFocusLists() {
             row.className = "sess-row";
             row.innerHTML = `
 
-                <span class="sess-name">${item.name}</span>
+                <span class="sess-name">${escapeHTML(item.name)}</span>
                 <span class="sess-time">${formatTimeTo12H(item.time)}</span>
 
             `;
@@ -626,7 +671,7 @@ function renderDayView() {
         row.className = "sess-row";
         row.innerHTML = `
 
-        <span class="sess-name">${item.studentName}</span>
+        <span class="sess-name">${escapeHTML(item.studentName)}</span>
         <span class="sess-time">${formatTimeTo12H(item.time)}</span>
 
         `;
@@ -696,6 +741,10 @@ function renderStudents() {
 
     }
 
+    const visibleStudents = students.filter(student =>
+        !studentSearchQuery || student.name.toLocaleLowerCase().includes(studentSearchQuery)
+    );
+
     if (students.length === 0) {
 
         container.innerHTML =
@@ -713,10 +762,18 @@ function renderStudents() {
 
     }
 
+    if (visibleStudents.length === 0) {
+        container.innerHTML = '<div class="empty empty-state"><strong>لا يوجد طالب بهذا الاسم</strong><small>جربي كلمة بحث مختلفة</small></div>';
+        renderDayFilter();
+        renderDayView();
+        renderFocusLists();
+        return;
+    }
+
     const todayIndex = getTodayIndex();
     const tomorrowIndex = (todayIndex + 1) % 7;
 
-    students.forEach(student => {
+    visibleStudents.forEach(student => {
 
         const card =
             document.createElement("div");
@@ -764,7 +821,7 @@ function renderStudents() {
 
 <div class="student-name">
 
-${student.name}
+${escapeHTML(student.name)}
 
 </div>
 
@@ -817,7 +874,8 @@ ${sessionsHTML}
 
 async function removeStudent(id) {
 
-    if (!await showConfirm("هل تريد حذف الطالب؟"))
+    const student = students.find(item => String(item.id) === String(id));
+    if (!await showConfirm(`سيتم حذف الطالب ${student?.name || ""} وكل مواعيده. هل تريد المتابعة؟`))
         return;
 
     try {
@@ -825,6 +883,7 @@ async function removeStudent(id) {
         await deleteStudentAPI(id);
 
         await loadStudents();
+        setAppStatus("تم حذف الطالب");
 
     }
 
@@ -834,6 +893,46 @@ async function removeStudent(id) {
 
     }
 
+}
+
+function exportBackup() {
+    const backup = {
+        app: "Tutor Schedule",
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        students: students.map(student => ({
+            name: student.name,
+            sessions: student.sessions || []
+        }))
+    };
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" }));
+    link.download = `tutor-schedule-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    link.click();
+    URL.revokeObjectURL(link.href);
+    setAppStatus("تم تصدير النسخة الاحتياطية");
+}
+
+async function importBackup(event) {
+    const file = event.target.files[0];
+    event.target.value = "";
+    if (!file) return;
+
+    try {
+        const backup = JSON.parse(await file.text());
+        if (!Array.isArray(backup.students) || backup.students.some(student => !student?.name || !Array.isArray(student.sessions))) {
+            throw new Error("ملف النسخة الاحتياطية غير صالح");
+        }
+        if (!await showConfirm(`سيتم إضافة ${backup.students.length} طالب إلى قائمتك الحالية. هل تريد المتابعة؟`, "استيراد نسخة احتياطية")) return;
+        setAppStatus("جاري استيراد البيانات...");
+        for (const student of backup.students) {
+            await addStudent({ name: String(student.name).trim(), sessions: student.sessions });
+        }
+        await loadStudents();
+        setAppStatus("تم استيراد النسخة الاحتياطية");
+    } catch (error) {
+        setAppStatus(error.message || "تعذر استيراد النسخة الاحتياطية", true);
+    }
 }
 
 // ======================================
@@ -1055,6 +1154,7 @@ ${student ? "حفظ التعديل" : "إضافة"}
 async function saveStudent(e) {
 
     e.preventDefault();
+    const submitButton = e.target.querySelector('button[type="submit"]');
 
     const name =
         document
@@ -1109,6 +1209,9 @@ async function saveStudent(e) {
 
     }
 
+    submitButton.disabled = true;
+    submitButton.innerText = editingId ? "جاري الحفظ..." : "جاري الإضافة...";
+
     const student = {
 
         name,
@@ -1150,4 +1253,51 @@ async function saveStudent(e) {
 
     }
 
+    submitButton.disabled = false;
+    submitButton.innerText = editingId ? "حفظ التعديل" : "إضافة";
+
+}
+
+async function enableNotifications() {
+    const status = document.getElementById("notificationStatus");
+    if (!("Notification" in window)) {
+        status.textContent = "المتصفح لا يدعم الإشعارات";
+        return;
+    }
+    const permission = await Notification.requestPermission();
+    updateNotificationStatus();
+    if (permission === "granted") checkUpcomingSessions();
+}
+
+function updateNotificationStatus() {
+    const button = document.getElementById("notificationsBtn");
+    const status = document.getElementById("notificationStatus");
+    if (!button || !status || !("Notification" in window)) return;
+    if (Notification.permission === "granted") {
+        button.textContent = "إشعارات المواعيد مفعّلة";
+        button.classList.add("notifications-enabled");
+        status.textContent = "سيصلك تنبيه قبل الموعد بـ15 دقيقة";
+    } else if (Notification.permission === "denied") {
+        button.textContent = "الإشعارات محظورة من المتصفح";
+        status.textContent = "اسمحي بها من إعدادات الموقع لتفعيلها";
+    }
+}
+
+function checkUpcomingSessions() {
+    if (!("Notification" in window) || Notification.permission !== "granted") return;
+    const now = new Date();
+    const dateKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+    const dayIndex = getTodayIndex();
+    students.forEach(student => (student.sessions || []).forEach(session => {
+        const matchesToday = session.date === dateKey || (!session.date && Number(session.day) === dayIndex);
+        if (!matchesToday || !session.time) return;
+        const [hours, minutes] = String(session.time).split(":").map(Number);
+        const sessionTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes);
+        const minutesUntil = Math.round((sessionTime - now) / 60000);
+        const notificationKey = `${student.id}-${dateKey}-${session.time}`;
+        if (minutesUntil >= 14 && minutesUntil <= 15 && !notifiedSessions.has(notificationKey)) {
+            new Notification("موعد جلسة قريب", { body: `${student.name} بعد 15 دقيقة · ${formatTimeTo12H(session.time)}` });
+            notifiedSessions.add(notificationKey);
+        }
+    }));
 }

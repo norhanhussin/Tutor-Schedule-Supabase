@@ -17,7 +17,17 @@ const salaryDays = [
     "الجمعة"
 ];
 
-window.addEventListener("load", initializeSalary);
+window.addEventListener("load", () => {
+    setupBackToTop();
+    initializeSalary();
+});
+
+function setupBackToTop() {
+    const button = document.getElementById("backToTop");
+    if (!button) return;
+    window.addEventListener("scroll", () => button.classList.toggle("is-visible", window.scrollY > 420));
+    button.onclick = () => window.scrollTo({ top: 0, behavior: "smooth" });
+}
 
 async function initializeSalary() {
     const { data: { session } } = await client.auth.getSession();
@@ -163,7 +173,7 @@ function renderSalary() {
         }
 
         const row = document.createElement("article");
-        row.className = `salary-row ${attended ? "is-completed" : ""}`;
+        row.className = `salary-row ${attended ? "is-completed" : "is-pending"}`;
         row.innerHTML = `
             <label class="attendance-control">
                 <input type="checkbox" class="attendance-checkbox" ${attended ? "checked" : ""}>
@@ -207,7 +217,11 @@ async function addExtraSession(event) {
     const dateKey = document.getElementById("extraSessionDate").value;
     const time = document.getElementById("extraSessionTime").value;
     const price = Math.max(0, Number(document.getElementById("extraSessionPrice").value) || 0);
+    const submitButton = event.target.querySelector('button[type="submit"]');
     if (!name || !dateKey || !time) return;
+
+    submitButton.disabled = true;
+    submitButton.textContent = "جاري الإضافة...";
 
     const extraSession = {
         date: dateKey,
@@ -232,8 +246,13 @@ async function addExtraSession(event) {
         showSalaryStatus("تمت إضافة الجلسة الإضافية وحسابها");
         renderSalary();
     } catch (error) {
+        submitButton.disabled = false;
+        submitButton.textContent = "إضافة وحساب الجلسة";
         showSalaryStatus(error.message);
     }
+
+    submitButton.disabled = false;
+    submitButton.textContent = "إضافة وحساب الجلسة";
 }
 
 function renderMonthlySummary() {
@@ -247,10 +266,40 @@ function renderMonthlySummary() {
         .map(row => `<div class="monthly-row"><strong>${escapeHTML(row.name)}</strong><span>${row.count} جلسة</span><b>${row.total.toLocaleString("ar-EG")} ج.م</b></div>`)
         .join("");
 
+    const completedSessions = summaries.reduce((sum, row) => sum + row.count, 0);
+    const averagePrice = completedSessions ? Math.round(monthTotal / completedSessions) : 0;
     container.innerHTML = rows
-        ? `<div class="monthly-total">إجمالي الشهر: <strong>${monthTotal.toLocaleString("ar-EG")} ج.م</strong></div>${rows}`
+        ? `<div class="monthly-total"><span>إجمالي الشهر</span><strong>${monthTotal.toLocaleString("ar-EG")} ج.م</strong><small>${completedSessions} جلسة · متوسط ${averagePrice.toLocaleString("ar-EG")} ج.م</small></div>${rows}`
         : '<div class="empty empty-state">لا يوجد طلاب حتى الآن</div>';
     renderMonthComparison(monthTotal);
+    renderMonthlyCalendar();
+}
+
+function renderMonthlyCalendar() {
+    const calendar = document.getElementById("monthlyCalendar");
+    if (!calendar) return;
+    const year = salaryMonth.getFullYear();
+    const month = salaryMonth.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const firstDayIndex = getDateDayIndex(new Date(year, month, 1));
+    const cells = [];
+    for (let index = 0; index < firstDayIndex; index++) cells.push('<div class="calendar-day is-empty"></div>');
+    for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(year, month, day);
+        const dateKey = toDateKey(date);
+        let scheduled = 0;
+        let completed = 0;
+        salaryStudents.forEach(student => (student.sessions || []).forEach(session => {
+            if (selectedStudentId !== "all" && String(student.id) !== String(selectedStudentId)) return;
+            const matches = session.date === dateKey || (!session.date && Number(session.day) === getDateDayIndex(date));
+            if (!matches) return;
+            scheduled++;
+            if (session.attendance?.[dateKey]) completed++;
+        }));
+        const classes = ["calendar-day", completed ? "has-completed" : "", scheduled && !completed ? "has-pending" : ""].filter(Boolean).join(" ");
+        cells.push(`<div class="${classes}"><b>${day}</b>${scheduled ? `<small>${completed}/${scheduled}</small>` : ""}</div>`);
+    }
+    calendar.innerHTML = `<div class="calendar-heading">${salaryMonth.toLocaleDateString("ar-EG", { month: "long", year: "numeric" })}</div><div class="calendar-weekdays">${salaryDays.map(day => `<span>${day.slice(0, 3)}</span>`).join("")}</div><div class="calendar-grid">${cells.join("")}</div>`;
 }
 
 function getMonthlySummaries(date) {
