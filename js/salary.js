@@ -3,6 +3,9 @@ let salaryDate = new Date();
 let salaryMonth = new Date();
 let selectedStudentId = "all";
 let monthlySort = "name";
+let attendanceFilter = "all";
+let salaryView = "day";
+let salaryStatusTimer;
 
 const salaryDays = [
     "السبت",
@@ -44,11 +47,19 @@ async function initializeSalary() {
         selectedStudentId = event.target.value;
         renderSalary();
     };
+    document.getElementById("attendanceFilter").onchange = event => {
+        attendanceFilter = event.target.value;
+        renderSalary();
+    };
     document.getElementById("monthlySort").onchange = event => {
         monthlySort = event.target.value;
         renderMonthlySummary();
     };
     document.getElementById("exportMonthlyBtn").onclick = exportMonthlyReport;
+    document.querySelectorAll(".view-switch").forEach(button => {
+        button.onclick = () => setSalaryView(button.dataset.view);
+    });
+    setSalaryView(salaryView);
 
     try {
         salaryStudents = await getStudents();
@@ -121,6 +132,9 @@ function getDailySessions() {
         if (selectedStudentId !== "all" && String(student.id) !== String(selectedStudentId)) return;
         (student.sessions || []).forEach((session, sessionIndex) => {
             if (session.date === dateKey || (!session.date && Number(session.day) === dayIndex)) {
+                const attended = Boolean(session.attendance?.[dateKey]);
+                if (attendanceFilter === "completed" && !attended) return;
+                if (attendanceFilter === "pending" && attended) return;
                 sessions.push({ student, session, sessionIndex, dateKey });
             }
         });
@@ -143,7 +157,7 @@ function renderSalary() {
     sessions.forEach(item => {
         const attended = Boolean(item.session.attendance?.[dateKey]);
         const price = getSessionPrice(item.session);
-        if (attended && status !== "cancelled") {
+        if (attended) {
             completed++;
             total += price;
         }
@@ -176,7 +190,12 @@ function renderSalary() {
     document.getElementById("dailyTotalStat").textContent = `${total.toLocaleString("ar-EG")} ج.م`;
 
     if (sessions.length === 0) {
-        list.innerHTML = '<div class="empty empty-state">لا توجد جلسات مجدولة لهذا اليوم</div>';
+        const message = attendanceFilter === "completed"
+            ? "لا توجد جلسات تم حضورها بهذا الفلتر"
+            : attendanceFilter === "pending"
+                ? "ممتاز، لا توجد جلسات معلقة بهذا الفلتر"
+                : "لا توجد جلسات مجدولة لهذا اليوم";
+        list.innerHTML = `<div class="empty empty-state"><strong>${message}</strong><small>يمكنك إضافة جلسة إضافية من القسم بالأسفل</small></div>`;
     }
 
     renderMonthlySummary();
@@ -285,6 +304,7 @@ function exportMonthlyReport() {
 async function saveSalaryEntry(item, row) {
     const checkbox = row.querySelector(".attendance-checkbox");
     const priceInput = row.querySelector(".session-price");
+    const saveButton = row.querySelector(".save-salary");
     const updatedSessions = (item.student.sessions || []).map(session => ({ ...session }));
     const updatedSession = { ...updatedSessions[item.sessionIndex] };
     const attendance = { ...(updatedSession.attendance || {}) };
@@ -292,6 +312,9 @@ async function saveSalaryEntry(item, row) {
     updatedSession.attendance = attendance;
     updatedSession.price = Math.max(0, Number(priceInput.value) || 0);
     updatedSessions[item.sessionIndex] = updatedSession;
+    saveButton.disabled = true;
+    saveButton.textContent = "جاري الحفظ";
+    row.classList.add("is-saving");
 
     try {
         await updateStudent(item.student.id, { name: item.student.name, sessions: updatedSessions });
@@ -299,12 +322,32 @@ async function saveSalaryEntry(item, row) {
         showSalaryStatus("تم حفظ الجلسة والسعر");
         renderSalary();
     } catch (error) {
+        saveButton.disabled = false;
+        saveButton.textContent = "حفظ";
+        row.classList.remove("is-saving");
         showSalaryStatus(error.message);
     }
 }
 
 function showSalaryStatus(message) {
-    document.getElementById("salaryStatus").textContent = message;
+    const statusElement = document.getElementById("salaryStatus");
+    clearTimeout(salaryStatusTimer);
+    statusElement.textContent = message;
+    statusElement.classList.add("is-visible");
+    salaryStatusTimer = setTimeout(() => statusElement.classList.remove("is-visible"), 3500);
+}
+
+function setSalaryView(view) {
+    salaryView = view;
+    document.querySelectorAll(".view-switch").forEach(button => {
+        button.classList.toggle("active", button.dataset.view === view);
+    });
+    document.querySelectorAll(".salary-daily-item").forEach(element => {
+        element.classList.toggle("salary-view-hidden", view !== "day");
+    });
+    document.querySelectorAll(".salary-monthly-item").forEach(element => {
+        element.classList.toggle("salary-view-hidden", view !== "month");
+    });
 }
 
 function formatTime(time) {

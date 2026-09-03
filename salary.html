@@ -17,23 +17,35 @@
             <div class="today-date">سجّلي الجلسات التي تمت، والسعر الخاص بكل جلسة</div>
         </header>
 
-        <section class="salary-toolbar" aria-label="اختيار التاريخ">
+        <section class="salary-toolbar salary-daily-item" aria-label="اختيار التاريخ">
             <button class="icon-btn" id="previousDateBtn" type="button">اليوم السابق</button>
             <input id="salaryDate" type="date" aria-label="تاريخ الحساب">
             <button class="icon-btn" id="nextDateBtn" type="button">اليوم التالي</button>
         </section>
 
-        <div class="salary-date-title" id="salaryDateTitle"></div>
+        <nav class="salary-view-switcher" aria-label="طريقة العرض">
+            <button class="view-switch active" data-view="day" type="button">اليوم</button>
+            <button class="view-switch" data-view="month" type="button">حساب الشهر</button>
+        </nav>
 
-        <section class="stats-grid salary-stats">
+        <div class="salary-date-title salary-daily-item" id="salaryDateTitle"></div>
+
+        <section class="stats-grid salary-stats salary-daily-item">
             <div class="stat-card"><span class="stat-label">جلسات اليوم</span><strong class="stat-value" id="salarySessionsStat">0</strong></div>
             <div class="stat-card"><span class="stat-label">الجلسات المنفذة</span><strong class="stat-value" id="completedSessionsStat">0</strong></div>
             <div class="stat-card"><span class="stat-label">إجمالي اليوم</span><strong class="stat-value" id="dailyTotalStat">0 ج.م</strong></div>
         </section>
 
-        <section class="salary-tools">
+        <section class="salary-tools salary-daily-item">
             <label>عرض الطالب
                 <select id="studentFilter"><option value="all">كل الطلاب</option></select>
+            </label>
+            <label>حالة الجلسة
+                <select id="attendanceFilter">
+                    <option value="all">كل الجلسات</option>
+                    <option value="completed">تم الحضور</option>
+                    <option value="pending">لم يتم الحضور</option>
+                </select>
             </label>
             <label>ترتيب
                 <select id="monthlySort">
@@ -45,10 +57,10 @@
             <button class="btn secondary" id="exportMonthlyBtn" type="button">تصدير تقرير الشهر</button>
         </section>
 
-        <section class="salary-list" id="salaryList"></section>
-        <div class="status-msg" id="salaryStatus"></div>
+        <section class="salary-list salary-daily-item" id="salaryList"></section>
+        <div class="status-msg salary-daily-item" id="salaryStatus" role="status" aria-live="polite"></div>
 
-        <section class="focus-card extra-session-card">
+        <section class="focus-card extra-session-card salary-daily-item">
             <h2>إضافة جلسة إضافية أو تجريبية</h2>
             <form id="extraSessionForm" class="extra-session-form">
                 <label>اسم الطالب<input id="extraStudentName" type="text" required placeholder="اكتبي اسم الطالب"></label>
@@ -59,7 +71,7 @@
             </form>
         </section>
 
-        <section class="monthly-section">
+        <section class="monthly-section salary-monthly-item">
             <div class="section-title"><span class="dot"></span>حساب الشهر</div>
             <div class="month-toolbar">
                 <label for="salaryMonth">الشهر</label>

@@ -789,6 +789,34 @@ h1 {
     font-weight: 700;
 }
 
+.salary-view-switcher {
+    display: flex;
+    gap: 8px;
+    padding: 5px;
+    margin: 18px auto 12px;
+    max-width: 360px;
+    background: rgba(14, 24, 19, 0.58);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+}
+
+.view-switch {
+    flex: 1;
+    border: 0;
+    border-radius: 8px;
+    padding: 9px 12px;
+    background: transparent;
+    color: var(--ink-dim);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.view-switch.active {
+    background: var(--gold);
+    color: #17251d;
+}
+
 .salary-shell input[type="date"],
 .salary-shell input[type="month"] {
     min-height: 48px;
@@ -844,6 +872,10 @@ h1 {
 .salary-row.is-completed {
     border-color: rgba(127, 169, 143, 0.65);
     background: linear-gradient(180deg, rgba(44, 83, 67, 0.96), rgba(25, 49, 39, 0.94));
+}
+
+.salary-row.is-saving {
+    opacity: .68;
 }
 
 .attendance-control {
@@ -935,6 +967,11 @@ h1 {
 .save-salary {
     color: var(--gold);
     border-color: rgba(214, 163, 76, 0.45);
+}
+
+.save-salary:disabled {
+    cursor: wait;
+    opacity: .75;
 }
 
 .salary-login {
@@ -1075,6 +1112,9 @@ h1 {
     display: block;
     color: var(--ink-dim);
     background: rgba(214, 163, 76, 0.08);
+    font-family: 'Cairo', sans-serif;
+    font-size: 17px;
+    border-bottom-color: rgba(214, 163, 76, 0.28);
 }
 
 .monthly-total strong,
@@ -1407,6 +1447,24 @@ select:focus {
     color: var(--ink-dim);
     font-size: 13px;
     margin-top: 40px;
+    min-height: 20px;
+    opacity: 0;
+    transition: opacity .2s ease;
+}
+
+.status-msg.is-visible {
+    opacity: 1;
+    color: var(--gold);
+}
+
+.empty-state small {
+    display: block;
+    margin-top: 6px;
+    color: var(--ink-dim);
+}
+
+.salary-view-hidden {
+    display: none !important;
 }
 
 .hidden{
@@ -1565,6 +1623,82 @@ select{
 }
 
 @media (max-width:600px) {
+    .salary-header {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .salary-header .back-link {
+        position: static;
+        display: inline-block;
+        order: -1;
+        margin-bottom: 10px;
+    }
+
+    .salary-header {
+        padding-top: 8px;
+    }
+
+    .salary-header h1 {
+        font-size: clamp(25px, 8vw, 34px);
+        line-height: 1.35;
+        padding-inline: 4px;
+    }
+
+    .salary-header .today-date {
+        line-height: 1.7;
+        padding-inline: 8px;
+    }
+
+    .salary-toolbar {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+        margin-top: 18px;
+    }
+
+    .salary-toolbar input {
+        grid-column: 1 / -1;
+        grid-row: 1;
+        width: 100%;
+        min-width: 0;
+        min-height: 42px;
+        padding: 8px 10px;
+        font-size: 14px;
+    }
+
+    .salary-toolbar .icon-btn {
+        width: 100%;
+        min-height: 42px;
+        padding-inline: 6px;
+    }
+
+    .salary-date-title {
+        font-size: 18px;
+        line-height: 1.6;
+        margin-inline: 4px;
+    }
+
+    .salary-stats {
+        display: flex;
+        overflow-x: auto;
+        gap: 8px;
+        padding: 2px 2px 8px;
+        margin-inline: -2px;
+        scroll-snap-type: x mandatory;
+    }
+
+    .salary-stats .stat-card {
+        flex: 0 0 150px;
+        scroll-snap-align: start;
+        padding: 12px;
+    }
+
+    .salary-stats .stat-value {
+        font-size: 24px;
+    }
+
     .salary-tools {
         direction: rtl;
         display: flex !important;
@@ -1577,12 +1711,34 @@ select{
         direction: rtl;
         align-self: flex-end;
         margin: 0 0 0 auto !important;
-        width: 280px !important;
+        width: 100% !important;
         max-width: 100% !important;
     }
 
     .salary-tools select {
         width: 100% !important;
         min-width: 0 !important;
+        padding-block: 8px;
+        font-size: 14px;
+    }
+
+    .salary-tools .btn {
+        min-height: 44px;
+    }
+
+    .add-bar .salary-link {
+        width: 100% !important;
+        align-self: stretch;
+        text-align: center;
+        text-decoration: none;
+    }
+
+    .extra-session-form input,
+    .month-toolbar input,
+    .salary-shell input[type="date"],
+    .salary-shell input[type="month"] {
+        min-height: 42px;
+        padding: 8px 10px;
+        font-size: 14px;
     }
 }
