@@ -10,13 +10,11 @@ const TABLE = "students";
 
 async function getStudents() {
 
-    const { data, error } = await client
+    const { data } = await trackSupabaseRequest(() => client
         .from(TABLE)
         .select("*")
         .eq("user_id", currentUser.id)
-        .order("created_at", { ascending: true });
-
-    if (error) throw error;
+        .order("created_at", { ascending: true }));
 
     return data || [];
 
@@ -28,14 +26,12 @@ async function getStudents() {
 
 async function getStudent(id) {
 
-    const { data, error } = await client
+    const { data } = await trackSupabaseRequest(() => client
         .from(TABLE)
         .select("*")
         .eq("id", id)
         .eq("user_id", currentUser.id)
-        .single();
-
-    if (error) throw error;
+        .single());
 
     return data;
 
@@ -47,7 +43,7 @@ async function getStudent(id) {
 
 async function addStudent(student) {
 
-    const { data, error } = await client
+    const { data } = await trackSupabaseRequest(() => client
         .from(TABLE)
         .insert([
             {
@@ -61,9 +57,7 @@ async function addStudent(student) {
             }
         ])
         .select()
-        .single();
-
-    if (error) throw error;
+        .single(), "write");
 
     return data;
 
@@ -75,7 +69,7 @@ async function addStudent(student) {
 
 async function updateStudent(id, student) {
 
-    const { data, error } = await client
+    const { data } = await trackSupabaseRequest(() => client
         .from(TABLE)
         .update({
             name: student.name,
@@ -84,12 +78,18 @@ async function updateStudent(id, student) {
         .eq("id", id)
         .eq("user_id", currentUser.id)
         .select()
-        .single();
-
-    if (error) throw error;
+        .single(), "write");
 
     return data;
 
+}
+
+async function checkSupabaseConnection() {
+    await trackSupabaseRequest(() => client
+        .from(TABLE)
+        .select("id")
+        .eq("user_id", currentUser.id)
+        .limit(1));
 }
 
 // ======================================
@@ -101,14 +101,12 @@ async function deleteStudentAPI(id) {
     const tomorrowDate = new Date();
     tomorrowDate.setDate(tomorrowDate.getDate() + 1);
     const tomorrow = getLocalDateKey(tomorrowDate);
-    const { data: student, error: readError } = await client
+    const { data: student } = await trackSupabaseRequest(() => client
         .from(TABLE)
         .select("archived_periods,deleted_at")
         .eq("id", id)
         .eq("user_id", currentUser.id)
-        .single();
-
-    if (readError) throw readError;
+        .single());
 
     const periods = Array.isArray(student.archived_periods) ? [...student.archived_periods] : [];
     if (student.deleted_at) {
@@ -119,13 +117,11 @@ async function deleteStudentAPI(id) {
     } else {
         periods.push({ start: tomorrow, end: null });
     }
-    const { error } = await client
+    await trackSupabaseRequest(() => client
         .from(TABLE)
         .update({ deleted_at: today, archived_periods: periods })
         .eq("id", id)
-        .eq("user_id", currentUser.id);
-
-    if (error) throw error;
+        .eq("user_id", currentUser.id), "write");
 
 }
 
@@ -145,15 +141,13 @@ async function restoreStudentAPI(student) {
         if (activePeriod.end <= activePeriod.start) periods.splice(periods.indexOf(activePeriod), 1);
     }
 
-    const { data, error } = await client
+    const { data } = await trackSupabaseRequest(() => client
         .from(TABLE)
         .update({ deleted_at: null, archived_periods: periods })
         .eq("id", student.id)
         .eq("user_id", currentUser.id)
         .select()
-        .single();
-
-    if (error) throw error;
+        .single(), "write");
     return data;
 }
 
@@ -170,15 +164,13 @@ async function setStudentPausedAPI(student, shouldPause) {
         activePeriod.end = today;
     }
 
-    const { data, error } = await client
+    const { data } = await trackSupabaseRequest(() => client
         .from(TABLE)
         .update({ is_paused: shouldPause, paused_periods: periods })
         .eq("id", student.id)
         .eq("user_id", currentUser.id)
         .select()
-        .single();
-
-    if (error) throw error;
+        .single(), "write");
     return data;
 }
 

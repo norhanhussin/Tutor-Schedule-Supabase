@@ -40,6 +40,7 @@ async function initializeSalary() {
     const { data: { session } } = await client.auth.getSession();
 
     if (!session) {
+        setSyncStatus("checking", "سجّلي الدخول لبدء الاتصال بـ Supabase");
         document.getElementById("salaryLogin").classList.remove("hidden");
         return;
     }
@@ -240,9 +241,6 @@ async function addExtraSession(event) {
     const submitButton = event.target.querySelector('button[type="submit"]');
     if (!name || !dateKey || !time) return;
 
-    submitButton.disabled = true;
-    submitButton.textContent = "جاري الإضافة...";
-
     const extraSession = {
         date: dateKey,
         time,
@@ -254,11 +252,20 @@ async function addExtraSession(event) {
         !student.deleted_at && student.name.trim().toLocaleLowerCase() === name.toLocaleLowerCase()
     );
     if (existingStudent?.is_paused) {
-        submitButton.disabled = false;
-        submitButton.textContent = "إضافة وحساب الجلسة";
         showSalaryStatus("هذا الطالب متوقف مؤقتًا، أعيديه للجدول قبل إضافة جلسة");
         return;
     }
+
+    const conflicts = findScheduleConflicts([extraSession], salaryStudents, null, name);
+    if (conflicts.length) {
+        const preview = conflicts.slice(0, 5)
+            .map(conflict => `${conflict.name} - ${salaryDays[conflict.day]} ${formatTime(conflict.time)}`)
+            .join("، ");
+        if (!window.confirm(`يوجد تعارض في موعد الجلسة مع: ${preview}. هل تريدين إضافتها رغم التعارض؟`)) return;
+    }
+
+    submitButton.disabled = true;
+    submitButton.textContent = "جاري الإضافة...";
 
     try {
         if (existingStudent) {

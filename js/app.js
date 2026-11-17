@@ -3,6 +3,7 @@
 // ======================================
 
 let students = [];
+let studentsLoaded = false;
 let currentUser = null;
 let isRegister = false;
 let editingId = null;
@@ -53,6 +54,7 @@ async function checkLogin() {
 
     if (!session) {
 
+        setSyncStatus("checking", "سجّلي الدخول لبدء الاتصال بـ Supabase");
         showLogin();
         return;
 
@@ -94,7 +96,7 @@ function setAppStatus(message, isError = false) {
     appStatusTimer = setTimeout(() => status.classList.remove("is-visible"), 3500);
 }
 
-function showConfirm(message, title = "تأكيد العملية") {
+function showConfirm(message, title = "تأكيد العملية", confirmLabel = "حذف") {
     return new Promise(resolve => {
         const modal = document.getElementById("modalRoot");
 
@@ -105,7 +107,7 @@ function showConfirm(message, title = "تأكيد العملية") {
                     <p class="message-text text-muted leading-8">${escapeHTML(message)}</p>
                     <div class="modal-actions mt-5 flex gap-3">
                         <button type="button" class="btn secondary flex-1 rounded-xl border border-line px-5 py-3 font-bold" id="confirmCancelBtn">إلغاء</button>
-                        <button type="button" class="btn danger-btn flex-1 rounded-xl bg-danger px-5 py-3 font-bold text-white" id="confirmOkBtn">حذف</button>
+                        <button type="button" class="btn danger-btn flex-1 rounded-xl bg-danger px-5 py-3 font-bold text-white" id="confirmOkBtn">${escapeHTML(confirmLabel)}</button>
                     </div>
                 </div>
             </div>
@@ -307,19 +309,14 @@ async function login() {
     const msg =
         document.getElementById("authMessage");
 
-    const { error } =
-        await client.auth.signInWithPassword({
-
+    try {
+        await trackSupabaseRequest(() => client.auth.signInWithPassword({
             email,
             password
-
-        });
-
-    if (error) {
-
-        msg.innerHTML = error.message;
+        }));
+    } catch (error) {
+        msg.textContent = error.message;
         return;
-
     }
 
     location.reload();
@@ -351,22 +348,17 @@ async function register() {
         return;
 
     }
-    const { error } =
-        await client.auth.signUp({
-
+    try {
+        await trackSupabaseRequest(() => client.auth.signUp({
             email,
             password
-
-        });
-
-    if (error) {
-
-        msg.innerHTML = error.message;
+        }));
+    } catch (error) {
+        msg.textContent = error.message;
         return;
-
     }
 
-    msg.innerHTML =
+    msg.textContent =
         "تم إنشاء الحساب بنجاح ✔";
 
 }
@@ -418,6 +410,7 @@ async function loadStudents() {
         setAppStatus("جاري تحميل البيانات...");
 
         students = await getStudents();
+        studentsLoaded = true;
 
         renderStudents();
         renderPausedStudents();
@@ -434,6 +427,7 @@ async function loadStudents() {
     catch (err) {
 
         console.error(err);
+        studentsLoaded = false;
         setAppStatus("تعذر تحميل البيانات", true);
         return false;
 
@@ -1054,7 +1048,26 @@ async function importBackup(event) {
         if (!Array.isArray(backup.students) || backup.students.some(student => !student?.name || !Array.isArray(student.sessions))) {
             throw new Error("ملف النسخة الاحتياطية غير صالح");
         }
+        if (!studentsLoaded) {
+            throw new Error("تعذر التحقق من تعارض المواعيد لأن قائمة الطلاب لم تُحمّل بنجاح.");
+        }
         if (!await showConfirm(`سيتم إضافة ${backup.students.length} طالب إلى قائمتك الحالية. هل تريد المتابعة؟`, "استيراد نسخة احتياطية")) return;
+        const importedStudents = backup.students.map((student, index) => ({ ...student, id: `backup-${index}` }));
+        const importConflicts = new Map();
+        importedStudents.forEach((student, index) => {
+            findScheduleConflicts(student.sessions, [...students, ...importedStudents.slice(0, index)], null, student.name)
+                .forEach(conflict => importConflicts.set(`${conflict.name}|${conflict.day}|${conflict.time}`, conflict));
+        });
+        if (importConflicts.size) {
+            const preview = [...importConflicts.values()].slice(0, 5)
+                .map(conflict => `${conflict.name} - ${DAYS[conflict.day]} ${formatTimeTo12H(conflict.time)}`)
+                .join("، ");
+            if (!await showConfirm(
+                `تحتوي النسخة على مواعيد متعارضة: ${preview}. هل تريدين الاستيراد رغم التعارض؟`,
+                "تنبيه تعارض المواعيد",
+                "استيراد رغم التعارض"
+            )) return;
+        }
         setAppStatus("جاري استيراد البيانات...");
         for (const student of backup.students) {
             await addStudent({
@@ -1346,6 +1359,25 @@ async function saveStudent(e) {
 
         return;
 
+    }
+
+    if (!studentsLoaded) {
+        showMessage("تعذر التحقق من تعارض المواعيد لأن قائمة الطلاب لم تُحمّل بنجاح. تحققي من الاتصال ثم أعيدي المحاولة.", "تعذر التحقق من المواعيد");
+        return;
+    }
+
+    const conflicts = findScheduleConflicts(sessions, students, editingId);
+    if (conflicts.length) {
+        const preview = conflicts.slice(0, 5)
+            .map(conflict => `${conflict.name} - ${DAYS[conflict.day]} ${formatTimeTo12H(conflict.time)}`)
+            .join("، ");
+        const remaining = conflicts.length > 5 ? `، و${conflicts.length - 5} تعارض آخر` : "";
+        const shouldContinue = await showConfirm(
+            `يوجد تعارض في نفس الموعد مع: ${preview}${remaining}. هل تريدين الحفظ رغم التعارض؟`,
+            "تنبيه تعارض المواعيد",
+            "حفظ رغم التعارض"
+        );
+        if (!shouldContinue) return;
     }
 
     submitButton.disabled = true;
