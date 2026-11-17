@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>السيشنات الفائتة | دفتر مواعيدي</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@500;700;800&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/tailwind.css">
+</head>
+<body class="min-h-screen font-sans text-ink antialiased">
+    <main id="missedShell" class="wrap mx-auto w-full max-w-5xl">
+        <header class="salary-header">
+            <a class="back-link inline-flex items-center gap-2 rounded-full border border-line bg-panel/60 px-4 py-2 text-accent transition hover:border-accent hover:text-ink" href="index.html">العودة للجدول</a>
+            <h1 class="font-display">السيشنات الفائتة</h1>
+            <div class="today-date text-muted">الجلسات التي لم يتم تسجيل حضورها خلال الشهر</div>
+        </header>
+
+        <nav class="mx-auto mb-6 flex max-w-md flex-wrap justify-center gap-2 rounded-2xl border border-line bg-panel/70 p-2" aria-label="صفحات الطلاب" data-site-navigation>
+            <a class="rounded-xl px-4 py-2 font-bold text-muted transition hover:bg-panel-raised hover:text-ink" href="index.html">الطلاب</a>
+            <a class="rounded-xl bg-accent px-4 py-2 font-bold text-canvas" href="missed.html" aria-current="page">السيشنات الفائتة</a>
+            <a class="rounded-xl px-4 py-2 font-bold text-muted transition hover:bg-panel-raised hover:text-ink" href="salary.html">حساب السالاري</a>
+        </nav>
+
+        <section class="mb-5 flex flex-wrap items-end justify-between gap-4 rounded-2xl border border-line bg-panel p-5 shadow-xl">
+            <label class="m-0 text-muted">الشهر
+                <input id="missedMonth" class="mt-2 rounded-xl border border-line bg-canvas px-4 py-3 text-ink" type="month" aria-label="شهر الجلسات الفائتة">
+            </label>
+            <div id="missedCount" class="font-display text-lg font-bold text-accent" role="status" aria-live="polite"></div>
+        </section>
+
+        <div id="missedStatus" class="mb-4 text-center text-muted" role="status" aria-live="polite"></div>
+        <section id="missedList" class="flex flex-col gap-3" aria-live="polite"></section>
+    </main>
+
+    <div id="missedLogin" class="mx-auto hidden min-h-[70vh] w-full max-w-5xl grid place-items-center">
+        <div class="rounded-2xl border border-line bg-panel p-8 text-center shadow-xl">
+            <h2 class="mb-5 font-display text-2xl font-bold">يجب تسجيل الدخول أولًا</h2>
+            <a class="inline-flex rounded-xl bg-accent px-5 py-3 font-bold text-canvas" href="index.html">الذهاب لتسجيل الدخول</a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabase.js"></script>
+    <script src="js/api.js"></script>
+    <script src="js/navigation.js"></script>
+    <script src="js/missed.js"></script>
+</body>
+</html>

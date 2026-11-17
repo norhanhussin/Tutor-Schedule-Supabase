@@ -1,0 +1,13 @@
+{
+  "name": "tutor-schedule-supabase",
+  "private": true,
+  "scripts": {
+    "build": "npm run build:css",
+    "build:css": "tailwindcss -i ./css/tailwind.input.css -o ./css/tailwind.css --minify",
+    "watch:css": "tailwindcss -i ./css/tailwind.input.css -o ./css/tailwind.css --watch"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.1.13",
+    "tailwindcss": "^4.1.13"
+  }
+}

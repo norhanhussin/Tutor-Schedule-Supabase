@@ -1,0 +1,24 @@
+@import "tailwindcss";
+@import "./style.css" layer(components);
+
+@source "../index.html";
+@source "../salary.html";
+@source "../missed.html";
+@source "../js/app.js";
+@source "../js/salary.js";
+@source "../js/missed.js";
+@source "../js/navigation.js";
+
+@theme {
+    --color-canvas: #0c1713;
+    --color-panel: #14251e;
+    --color-panel-raised: #1b3027;
+    --color-ink: #f4f0e7;
+    --color-muted: #b7c3bb;
+    --color-accent: #e0b86f;
+    --color-sage: #91b59f;
+    --color-danger: #d77f83;
+    --color-line: rgba(224, 235, 227, 0.12);
+    --font-sans: "Tajawal", sans-serif;
+    --font-display: "Cairo", sans-serif;
+}

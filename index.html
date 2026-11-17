@@ -12,18 +12,18 @@
 
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@500;700;800&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/tailwind.css">
 </head>
 
-<body>
+<body class="min-h-screen font-sans text-ink antialiased">
 
 <div id="authBox" class="hidden"></div>
 <div id="appShell" class="hidden">
 
-    <div class="wrap">
+    <div class="wrap mx-auto w-full max-w-5xl">
 
         <header>
-            <h1>دفتر مواعيدي</h1>
+            <h1 class="font-display">دفتر مواعيدي</h1>
 
             <svg class="underline" viewBox="0 0 140 10">
                 <path d="M2 6 Q 35 -2, 70 6 T 138 6"
@@ -33,56 +33,59 @@
                       stroke-linecap="round"/>
             </svg>
 
-            <div class="today-date" id="todayDate"></div>
+            <div class="today-date text-muted" id="todayDate"></div>
         </header>
 
-        <nav class="quick-nav" aria-label="التنقل السريع">
-            <a class="quick-nav-link active" href="#top">الرئيسية</a>
-            <a class="quick-nav-link" href="#dayViewSection">جدول اليوم</a>
-            <a class="quick-nav-link" href="#studentsSection">الطلاب</a>
-            <a class="quick-nav-link salary-nav-link" href="salary.html">حساب السالاري</a>
+        <nav class="quick-nav sticky top-2 z-20 flex flex-wrap justify-center gap-1.5 rounded-2xl border border-line bg-panel/80 p-2 shadow-xl backdrop-blur-xl" aria-label="التنقل السريع" data-site-navigation>
+            <a class="quick-nav-link rounded-xl px-4 py-2 font-bold transition hover:-translate-y-0.5" href="#top">الرئيسية</a>
+            <a class="quick-nav-link rounded-xl px-4 py-2 font-bold transition hover:-translate-y-0.5" href="#dayViewSection">جدول اليوم</a>
+            <a class="quick-nav-link rounded-xl px-4 py-2 font-bold transition hover:-translate-y-0.5" href="#studentsSection">الطلاب</a>
+            <a class="quick-nav-link rounded-xl px-4 py-2 font-bold transition hover:-translate-y-0.5" href="#pausedStudentsSection">المتوقفون</a>
+            <a class="quick-nav-link rounded-xl px-4 py-2 font-bold transition hover:-translate-y-0.5" href="#archivedStudentsSection">الأرشيف</a>
+            <a class="quick-nav-link salary-nav-link rounded-xl border border-accent/30 px-4 py-2 font-bold text-accent transition hover:-translate-y-0.5" href="missed.html">السيشنات الفائتة</a>
+            <a class="quick-nav-link salary-nav-link rounded-xl border border-accent/30 px-4 py-2 font-bold text-accent transition hover:-translate-y-0.5" href="salary.html">حساب السالاري</a>
         </nav>
 
-    <div class="stats-grid" id="top">
-        <div class="stat-card">
-            <span class="stat-label">إجمالي الطلاب</span>
-            <strong class="stat-value" id="totalStudentsStat">0</strong>
+    <div class="stats-grid grid grid-cols-3 gap-4" id="top">
+        <div class="stat-card rounded-2xl border border-line bg-panel px-5 py-4 shadow-xl transition hover:-translate-y-0.5 hover:border-accent/40">
+            <span class="stat-label text-muted">إجمالي الطلاب</span>
+            <strong class="stat-value font-display text-accent" id="totalStudentsStat">0</strong>
         </div>
 
-        <div class="stat-card">
-            <span class="stat-label">مواعيد اليوم</span>
-            <strong class="stat-value" id="todaySessionsStat">0</strong>
+        <div class="stat-card rounded-2xl border border-line bg-panel px-5 py-4 shadow-xl transition hover:-translate-y-0.5 hover:border-accent/40">
+            <span class="stat-label text-muted">مواعيد اليوم</span>
+            <strong class="stat-value font-display text-accent" id="todaySessionsStat">0</strong>
         </div>
 
-        <div class="stat-card">
-            <span class="stat-label">مواعيد غدًا</span>
-            <strong class="stat-value" id="tomorrowSessionsStat">0</strong>
+        <div class="stat-card rounded-2xl border border-line bg-panel px-5 py-4 shadow-xl transition hover:-translate-y-0.5 hover:border-accent/40">
+            <span class="stat-label text-muted">مواعيد غدًا</span>
+            <strong class="stat-value font-display text-accent" id="tomorrowSessionsStat">0</strong>
         </div>
     </div>
 
-    <div class="notification-bar">
-        <button class="btn secondary" id="notificationsBtn" type="button">تفعيل إشعارات المواعيد</button>
-        <span id="notificationStatus" role="status" aria-live="polite"></span>
+    <div class="notification-bar flex flex-wrap items-center justify-start gap-3 rounded-2xl border border-line bg-panel/50 p-3">
+        <button class="btn secondary rounded-xl border border-line px-5 py-3 font-bold transition hover:border-sage" id="notificationsBtn" type="button">تفعيل إشعارات المواعيد</button>
+        <span class="text-muted" id="notificationStatus" role="status" aria-live="polite"></span>
     </div>
 
-    <div class="section-title" id="dayViewSection">
+    <div class="section-title font-display font-bold" id="dayViewSection">
         <span class="dot"></span>
         فلتر الأيام
     </div>
 
-    <div class="ribbon" id="ribbon"></div>
+    <div class="ribbon flex gap-2 overflow-x-auto rounded-2xl border border-line bg-canvas/60 p-2" id="ribbon"></div>
 
-    <div class="focus-grid">
-        <div class="focus-card">
-            <h3>
+    <div class="focus-grid grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div class="focus-card rounded-2xl border border-line bg-panel p-5 shadow-xl">
+            <h3 class="font-display font-bold">
                 <span class="dot"></span>
                 اليوم
             </h3>
             <div class="schedule-list" id="todayList"></div>
         </div>
 
-        <div class="focus-card">
-            <h3>
+        <div class="focus-card rounded-2xl border border-line bg-panel p-5 shadow-xl">
+            <h3 class="font-display font-bold">
                 <span class="dot"></span>
                 غدًا
             </h3>
@@ -90,14 +93,14 @@
         </div>
     </div>
 
-    <div class="section-title">
+    <div class="section-title font-display font-bold">
         <span class="dot"></span>
         <span id="dayViewTitle">جدول اليوم</span>
     </div>
 
-        <div class="day-view" id="dayView"></div>
+        <div class="day-view rounded-2xl border border-line bg-panel p-5 shadow-xl" id="dayView"></div>
 
-        <div class="section-title" id="studentsSection">
+        <div class="section-title font-display font-bold" id="studentsSection">
             <span class="dot"></span>
             الطلاب
         </div>
@@ -109,26 +112,40 @@
             </label>
         </div>
 
-        <div class="student-list" id="studentList"></div>
+        <div class="student-list flex flex-col gap-3" id="studentList"></div>
 
-        <div class="add-bar">
-            <button class="btn" id="addStudentBtn">
+        <div class="section-title mt-8 font-display font-bold" id="pausedStudentsSection">
+            <span class="dot"></span>
+            الطلاب المتوقفون مؤقتًا
+        </div>
+        <p class="mb-4 text-sm text-muted">لن تظهر مواعيدهم في الجدول أو حساب السالاري خلال فترة التوقف.</p>
+        <div class="student-list flex flex-col gap-3" id="pausedStudentList"></div>
+
+        <div class="section-title mt-8 font-display font-bold" id="archivedStudentsSection">
+            <span class="dot"></span>
+            أرشيف الطلاب
+        </div>
+        <p class="mb-4 text-sm text-muted">تظل سجلات الحضور والراتب محفوظة، ويمكن استعادة الطالب إلى الجدول.</p>
+        <div class="student-list flex flex-col gap-3" id="archivedStudentList"></div>
+
+        <div class="add-bar flex flex-wrap items-center justify-center gap-3 rounded-2xl border border-line bg-panel/40 p-4">
+            <button class="btn rounded-xl bg-accent px-5 py-3 font-bold text-canvas shadow-lg transition hover:-translate-y-0.5 hover:brightness-110" id="addStudentBtn">
                 + إضافة طالب جديد
             </button>
 
-            <a class="btn salary-link" href="salary.html">
+            <a class="btn salary-link rounded-xl bg-accent px-5 py-3 font-bold text-canvas shadow-lg transition hover:-translate-y-0.5" href="salary.html">
                 حساب السالاري
             </a>
 
-            <button class="btn" id="logoutBtn" style="margin-right: 12px;">
+            <button class="btn rounded-xl bg-accent px-5 py-3 font-bold text-canvas shadow-lg transition hover:-translate-y-0.5" id="logoutBtn" style="margin-right: 12px;">
                 تسجيل الخروج
             </button>
 
-            <button class="btn secondary" id="exportBackupBtn" type="button">
+            <button class="btn secondary rounded-xl border border-line px-5 py-3 font-bold transition hover:border-sage" id="exportBackupBtn" type="button">
                 تصدير نسخة احتياطية
             </button>
 
-            <label class="btn secondary backup-import-label" for="importBackupInput">
+            <label class="btn secondary backup-import-label rounded-xl border border-line px-5 py-3 font-bold transition hover:border-sage" for="importBackupInput">
                 استيراد نسخة احتياطية
                 <input id="importBackupInput" type="file" accept="application/json" hidden>
             </label>
@@ -150,6 +167,7 @@
 
 <script src="js/api.js"></script>
 
+<script src="js/navigation.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

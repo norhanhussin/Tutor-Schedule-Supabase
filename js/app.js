@@ -62,7 +62,7 @@ async function checkLogin() {
 
     showApp();
 
-    await loadStudents();
+    if (await loadStudents()) offerMonthlyBackupReminder();
 
 }
 
@@ -70,12 +70,12 @@ function showMessage(message, title = "تنبيه") {
     const modal = document.getElementById("modalRoot");
 
     modal.innerHTML = `
-        <div class="overlay message-overlay">
-            <div class="modal message-modal" role="dialog" aria-modal="true">
-                <h2>${title}</h2>
-                <p class="message-text">${escapeHTML(message)}</p>
-                <div class="modal-actions">
-                    <button type="button" class="btn" id="messageCloseBtn">حسنًا</button>
+        <div class="overlay message-overlay fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-canvas/80 p-5 backdrop-blur-md">
+            <div class="modal message-modal w-full max-w-md rounded-3xl border border-line bg-panel p-6 shadow-2xl" role="dialog" aria-modal="true">
+                <h2 class="mb-3 text-center font-display text-2xl font-bold">${title}</h2>
+                <p class="message-text text-muted leading-8">${escapeHTML(message)}</p>
+                <div class="modal-actions mt-5 flex gap-3">
+                    <button type="button" class="btn flex-1 rounded-xl bg-accent px-5 py-3 font-bold text-canvas transition hover:brightness-110" id="messageCloseBtn">حسنًا</button>
                 </div>
             </div>
         </div>
@@ -99,13 +99,13 @@ function showConfirm(message, title = "تأكيد العملية") {
         const modal = document.getElementById("modalRoot");
 
         modal.innerHTML = `
-            <div class="overlay message-overlay">
-                <div class="modal message-modal" role="dialog" aria-modal="true">
-                    <h2>${title}</h2>
-                    <p class="message-text">${escapeHTML(message)}</p>
-                    <div class="modal-actions">
-                        <button type="button" class="btn secondary" id="confirmCancelBtn">إلغاء</button>
-                        <button type="button" class="btn danger-btn" id="confirmOkBtn">حذف</button>
+            <div class="overlay message-overlay fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-canvas/80 p-5 backdrop-blur-md">
+                <div class="modal message-modal w-full max-w-md rounded-3xl border border-line bg-panel p-6 shadow-2xl" role="dialog" aria-modal="true">
+                    <h2 class="mb-3 text-center font-display text-2xl font-bold">${title}</h2>
+                    <p class="message-text text-muted leading-8">${escapeHTML(message)}</p>
+                    <div class="modal-actions mt-5 flex gap-3">
+                        <button type="button" class="btn secondary flex-1 rounded-xl border border-line px-5 py-3 font-bold" id="confirmCancelBtn">إلغاء</button>
+                        <button type="button" class="btn danger-btn flex-1 rounded-xl bg-danger px-5 py-3 font-bold text-white" id="confirmOkBtn">حذف</button>
                     </div>
                 </div>
             </div>
@@ -142,66 +142,69 @@ function showLogin() {
 
     auth.innerHTML = `
 
-<div class="wrap auth-layout">
+<div class="wrap auth-layout mx-auto grid w-full max-w-5xl grid-cols-1 items-center gap-8 md:grid-cols-[1.2fr_.9fr]">
 
-    <div class="auth-hero">
+    <div class="auth-hero relative px-5 py-8">
 
-        <span class="hero-badge">
+        <span class="hero-badge mb-4 inline-flex rounded-full border border-accent/30 bg-accent/10 px-4 py-2 text-sm font-bold text-accent">
             Tutor Schedule
         </span>
 
-        <h1>
+        <h1 class="font-display font-extrabold leading-tight">
             لوحة المدرس
         </h1>
 
-        <p>
+        <p class="max-w-xl text-lg leading-9 text-muted">
             أدر مواعيدك بسهولة، أضف الطلاب، نظم الجلسات،
             وتابع جدولك اليومي من أي جهاز.
         </p>
 
     </div>
 
-    <div class="focus-card auth-card">
+    <div class="focus-card auth-card rounded-3xl border border-line bg-panel-raised p-7 shadow-2xl">
 
-        <h2 id="authTitle">
+        <h2 class="mb-6 text-center font-display text-2xl font-bold" id="authTitle">
             تسجيل الدخول
         </h2>
 
         <form id="loginForm">
 
-<label>البريد الإلكتروني</label>
+<label class="mb-2 block text-sm font-bold text-muted">البريد الإلكتروني</label>
 
 <input
 type="email"
 id="email"
+class="mb-4 w-full rounded-xl border border-line bg-canvas px-4 py-3 text-ink shadow-inner outline-none transition focus:border-accent focus:ring-4 focus:ring-accent/10"
 placeholder="example@email.com"
 required
 >
 
-<label>كلمة المرور</label>
+<label class="mb-2 block text-sm font-bold text-muted">كلمة المرور</label>
 
 <input
 type="password"
 id="password"
+class="mb-4 w-full rounded-xl border border-line bg-canvas px-4 py-3 text-ink shadow-inner outline-none transition focus:border-accent focus:ring-4 focus:ring-accent/10"
 required
 >
 
 <div id="confirmPasswordBox" style="display:none;">
 
-<label>تأكيد كلمة المرور</label>
+<label class="mb-2 block text-sm font-bold text-muted">تأكيد كلمة المرور</label>
 
 <input
 type="password"
 id="confirmPassword"
+class="mb-4 w-full rounded-xl border border-line bg-canvas px-4 py-3 text-ink shadow-inner outline-none transition focus:border-accent focus:ring-4 focus:ring-accent/10"
 >
 
 </div>
 
-<div class="modal-actions">
+<div class="modal-actions mt-4 flex gap-3">
 
 <button
 type="button"
-class="btn secondary"
+class="btn secondary flex-1 rounded-xl border border-line px-5 py-3 font-bold transition hover:border-accent"
 id="toggleBtn">
 
 إنشاء حساب
@@ -209,7 +212,7 @@ id="toggleBtn">
 </button>
 
 <button
-class="btn"
+class="btn flex-1 rounded-xl bg-accent px-5 py-3 font-bold text-canvas shadow-lg transition hover:brightness-110"
 type="submit"
 id="submitBtn">
 
@@ -221,7 +224,7 @@ id="submitBtn">
 
 </form>
 
-        <div class="status-msg" id="authMessage"></div>
+        <div class="status-msg text-center text-muted" id="authMessage"></div>
 
     </div>
 
@@ -417,11 +420,14 @@ async function loadStudents() {
         students = await getStudents();
 
         renderStudents();
+        renderPausedStudents();
+        renderArchivedStudents();
 
         updateStats();
 
         renderFocusLists();
         setAppStatus("تم تحديث البيانات");
+        return true;
 
     }
 
@@ -429,6 +435,7 @@ async function loadStudents() {
 
         console.error(err);
         setAppStatus("تعذر تحميل البيانات", true);
+        return false;
 
     }
 
@@ -500,7 +507,7 @@ function renderDayFilter() {
 
         <button
             type="button"
-            class="tab ${isActive ? "active" : ""} ${isToday ? "is-today" : ""}"
+            class="tab ${isActive ? "active" : ""} ${isToday ? "is-today" : ""} min-w-20 rounded-xl border border-line bg-panel-raised px-4 py-3 font-bold transition hover:-translate-y-0.5"
             data-day-index="${index}">
 
             ${day}
@@ -545,7 +552,10 @@ function renderFocusLists() {
 
         const matches = [];
 
+        const sessionDate = getUpcomingDateForDay(dayIndex);
+        const sessionDateKey = getLocalDateKey(sessionDate);
         students.forEach(student => {
+            if (!isStudentAvailableOnDate(student, sessionDateKey)) return;
 
             sortSessionsByTime(student.sessions || []).forEach(session => {
 
@@ -575,22 +585,22 @@ function renderFocusLists() {
 
         if (matches.length === 0) {
 
-            box.innerHTML = '<div class="empty">لا توجد مواعيد</div>';
+            box.innerHTML = '<div class="empty rounded-xl border border-dashed border-line p-4 text-center text-muted">لا توجد مواعيد</div>';
             return;
 
         }
 
         const list = document.createElement("div");
-        list.className = "schedule-list";
+        list.className = "schedule-list flex flex-col gap-2";
 
         matches.forEach(item => {
 
             const row = document.createElement("div");
-            row.className = "sess-row";
+            row.className = "sess-row flex items-center justify-between gap-3 rounded-xl border border-line bg-canvas/40 px-4 py-3";
             row.innerHTML = `
 
-                <span class="sess-name">${escapeHTML(item.name)}</span>
-                <span class="sess-time">${formatTimeTo12H(item.time)}</span>
+                <span class="sess-name font-bold text-ink">${escapeHTML(item.name)}</span>
+                <span class="sess-time rounded-full bg-accent/10 px-3 py-1 font-bold text-accent">${formatTimeTo12H(item.time)}</span>
 
             `;
 
@@ -613,12 +623,14 @@ function renderDayView() {
 
     const currentDayIndex = selectedDayIndex ?? getTodayIndex();
     const dayName = DAYS[currentDayIndex];
+    const selectedDateKey = getLocalDateKey(getUpcomingDateForDay(currentDayIndex));
 
     title.innerText = `جدول ${dayName}`;
 
     const matchingSessions = [];
 
     students.forEach(student => {
+        if (!isStudentAvailableOnDate(student, selectedDateKey)) return;
 
         sortSessionsByTime(student.sessions || []).forEach(session => {
 
@@ -652,7 +664,7 @@ function renderDayView() {
 
         container.innerHTML = `
 
-        <div class="empty">
+        <div class="empty rounded-xl border border-dashed border-line p-4 text-center text-muted">
 
         لا توجد مواعيد لهذا اليوم
 
@@ -663,16 +675,16 @@ function renderDayView() {
     }
 
     const list = document.createElement("div");
-    list.className = "schedule-list";
+    list.className = "schedule-list flex flex-col gap-2";
 
     matchingSessions.forEach(item => {
 
         const row = document.createElement("div");
-        row.className = "sess-row";
+        row.className = "sess-row flex items-center justify-between gap-3 rounded-xl border border-line bg-canvas/40 px-4 py-3";
         row.innerHTML = `
 
-        <span class="sess-name">${escapeHTML(item.studentName)}</span>
-        <span class="sess-time">${formatTimeTo12H(item.time)}</span>
+        <span class="sess-name font-bold text-ink">${escapeHTML(item.studentName)}</span>
+        <span class="sess-time rounded-full bg-accent/10 px-3 py-1 font-bold text-accent">${formatTimeTo12H(item.time)}</span>
 
         `;
 
@@ -690,8 +702,8 @@ function renderDayView() {
 
 function updateStats() {
 
-    document.getElementById("totalStudentsStat").innerText =
-        students.length;
+    const activeStudents = students.filter(student => !student.is_paused && !student.deleted_at);
+    document.getElementById("totalStudentsStat").innerText = activeStudents.length;
 
     const todayIndex = getTodayIndex();
 
@@ -702,14 +714,16 @@ function updateStats() {
     let todaySessionsStat = 0;
     let tomorrowSessionsStat = 0;
 
-    students.forEach(student => {
+    const todayDateKey = getLocalDateKey(new Date());
+    const tomorrowDateKey = getLocalDateKey(tomorrow);
+    activeStudents.forEach(student => {
 
         (student.sessions || []).forEach(session => {
 
-            if (Number(session.day) === todayIndex)
+            if (Number(session.day) === todayIndex && isStudentAvailableOnDate(student, todayDateKey))
                 todaySessionsStat++;
 
-            if (Number(session.day) === tomorrowIndex)
+            if (Number(session.day) === tomorrowIndex && isStudentAvailableOnDate(student, tomorrowDateKey))
                 tomorrowSessionsStat++;
 
         });
@@ -722,6 +736,13 @@ function updateStats() {
     document.getElementById("tomorrowSessionsStat").innerText =
         tomorrowSessionsStat;
 
+}
+
+function getUpcomingDateForDay(dayIndex) {
+    const date = new Date();
+    const daysAhead = (dayIndex - getTodayIndex() + 7) % 7;
+    date.setDate(date.getDate() + daysAhead);
+    return date;
 }
 
 // ======================================
@@ -741,15 +762,16 @@ function renderStudents() {
 
     }
 
-    const visibleStudents = students.filter(student =>
+    const activeStudents = students.filter(student => !student.is_paused && !student.deleted_at);
+    const visibleStudents = activeStudents.filter(student =>
         !studentSearchQuery || student.name.toLocaleLowerCase().includes(studentSearchQuery)
     );
 
-    if (students.length === 0) {
+    if (activeStudents.length === 0) {
 
         container.innerHTML =
 
-            `<div class="empty empty-state">
+            `<div class="empty empty-state rounded-2xl border border-dashed border-line bg-panel/50 p-7 text-center text-muted">
 
         لا يوجد طلاب حتى الآن
 
@@ -763,7 +785,7 @@ function renderStudents() {
     }
 
     if (visibleStudents.length === 0) {
-        container.innerHTML = '<div class="empty empty-state"><strong>لا يوجد طالب بهذا الاسم</strong><small>جربي كلمة بحث مختلفة</small></div>';
+        container.innerHTML = '<div class="empty empty-state rounded-2xl border border-dashed border-line bg-panel/50 p-7 text-center text-muted"><strong>لا يوجد طالب بهذا الاسم</strong><small class="mt-2 block text-muted">جربي كلمة بحث مختلفة</small></div>';
         renderDayFilter();
         renderDayView();
         renderFocusLists();
@@ -778,10 +800,12 @@ function renderStudents() {
         const card =
             document.createElement("div");
 
-        const hasTodaySession = (student.sessions || []).some(session => Number(session.day) === todayIndex);
-        const hasTomorrowSession = (student.sessions || []).some(session => Number(session.day) === tomorrowIndex);
+        const hasTodaySession = isStudentAvailableOnDate(student, getLocalDateKey(new Date())) && (student.sessions || []).some(session => Number(session.day) === todayIndex);
+        const tomorrowDate = new Date();
+        tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+        const hasTomorrowSession = isStudentAvailableOnDate(student, getLocalDateKey(tomorrowDate)) && (student.sessions || []).some(session => Number(session.day) === tomorrowIndex);
 
-        card.className = `student-card ${hasTodaySession ? "is-today" : ""} ${hasTomorrowSession ? "is-tomorrow" : ""}`;
+        card.className = `student-card ${hasTodaySession ? "is-today" : ""} ${hasTomorrowSession ? "is-tomorrow" : ""} rounded-2xl border border-line bg-panel-raised p-5 shadow-lg transition hover:-translate-y-0.5 hover:border-accent/40`;
 
         let sessionsHTML = "";
 
@@ -792,7 +816,7 @@ function renderStudents() {
 
             sessionsHTML += `
 
-            <span class="pill ${isCurrentDay ? "pill-active" : ""}">
+            <span class="pill ${isCurrentDay ? "pill-active" : ""} rounded-full border border-accent/20 bg-accent/10 px-3 py-1.5 text-sm font-bold text-accent">
 
                 ${isExtraSession ? "جلسة إضافية" : DAYS[Number(session.day)]}
 
@@ -810,16 +834,16 @@ function renderStudents() {
         if (hasTomorrowSession) labels.push("غدًا");
 
         const statusHTML = labels.length
-            ? `<div class="student-meta">${labels.map(label => `<span class="day-badge">${label}</span>`).join("")}</div>`
-            : `<div class="student-meta"><span class="day-badge muted">بدون جلسات قريبة</span></div>`;
+            ? `<div class="student-meta flex flex-wrap gap-2">${labels.map(label => `<span class="day-badge rounded-full border border-accent/20 bg-accent/10 px-3 py-1 text-xs font-bold text-accent">${label}</span>`).join("")}</div>`
+            : `<div class="student-meta flex flex-wrap gap-2"><span class="day-badge muted rounded-full border border-line bg-canvas/40 px-3 py-1 text-xs font-bold text-muted">بدون جلسات قريبة</span></div>`;
 
         card.innerHTML = `
 
-<div class="student-head">
+<div class="student-head mb-4 flex items-start justify-between gap-3">
 
-<div class="student-name-wrap">
+<div class="student-name-wrap flex min-w-0 flex-1 flex-col gap-2">
 
-<div class="student-name">
+<div class="student-name font-display text-lg font-bold text-ink">
 
 ${escapeHTML(student.name)}
 
@@ -829,10 +853,10 @@ ${statusHTML}
 
 </div>
 
-<div class="student-actions">
+<div class="student-actions flex items-center gap-2">
 
 <button
-class="icon-btn"
+class="icon-btn rounded-lg border border-line px-3 py-2 text-muted transition hover:border-sage hover:text-ink"
 onclick="editStudent('${student.id}')">
 
 تعديل
@@ -840,7 +864,15 @@ onclick="editStudent('${student.id}')">
 </button>
 
 <button
-class="icon-btn danger"
+class="icon-btn rounded-lg border border-sage/30 px-3 py-2 text-sage transition hover:bg-sage/10"
+onclick="toggleStudentPause('${student.id}', true)">
+
+إيقاف مؤقت
+
+</button>
+
+<button
+class="icon-btn danger rounded-lg border border-danger/30 px-3 py-2 text-danger transition hover:bg-danger/10"
 onclick="removeStudent('${student.id}')">
 
 حذف
@@ -851,7 +883,7 @@ onclick="removeStudent('${student.id}')">
 
 </div>
 
-<div class="student-sessions">
+<div class="student-sessions flex flex-wrap gap-2">
 
 ${sessionsHTML}
 
@@ -875,24 +907,119 @@ ${sessionsHTML}
 async function removeStudent(id) {
 
     const student = students.find(item => String(item.id) === String(id));
-    if (!await showConfirm(`سيتم حذف الطالب ${student?.name || ""} وكل مواعيده. هل تريد المتابعة؟`))
+    if (!await showConfirm(`سيُخفى الطالب ${student?.name || ""} من القوائم القادمة، مع الاحتفاظ بسجل حضوره وحسابه القديم. هل تريد المتابعة؟`))
         return;
 
     try {
-
         await deleteStudentAPI(id);
-
         await loadStudents();
-        setAppStatus("تم حذف الطالب");
+        setAppStatus("تم إخفاء الطالب مع الاحتفاظ بسجل حسابه");
+    } catch (error) {
+        showMessage(error.message, "حدث خطأ");
+    }
+}
 
+async function restoreStudent(id) {
+    const student = students.find(item => String(item.id) === String(id));
+    if (!student || !await showConfirm(
+        `سيتم إعادة ${student.name} إلى قائمة الطلاب بمواعيده الحالية، مع إبقاء فترة الأرشفة خارج الحسابات. هل تريدين المتابعة؟`,
+        "استعادة طالب"
+    )) return;
+
+    try {
+        await restoreStudentAPI(student);
+        await loadStudents();
+        setAppStatus("تمت استعادة الطالب مع الحفاظ على سجلاته");
+    } catch (error) {
+        showMessage(error.message, "تعذرت استعادة الطالب");
+    }
+}
+
+async function toggleStudentPause(id, shouldPause) {
+    const student = students.find(item => String(item.id) === String(id));
+    if (!student) return;
+
+    try {
+        await setStudentPausedAPI(student, shouldPause);
+        await loadStudents();
+        setAppStatus(shouldPause ? "تم إيقاف الطالب مؤقتًا" : "تمت إعادة الطالب إلى الجدول");
+    } catch (error) {
+        showMessage(error.message, "تعذر تحديث حالة الطالب");
+    }
+}
+
+function renderPausedStudents() {
+    const container = document.getElementById("pausedStudentList");
+    if (!container) return;
+
+    const pausedStudents = students.filter(student => student.is_paused && !student.deleted_at);
+    if (!pausedStudents.length) {
+        container.innerHTML = '<div class="empty-state rounded-2xl border border-dashed border-line bg-panel/50 p-5 text-center text-muted">لا يوجد طلاب متوقفون حاليًا</div>';
+        return;
     }
 
-    catch (err) {
+    container.innerHTML = pausedStudents.map(student => `
+        <article class="student-card flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-line bg-panel-raised p-5 shadow-lg">
+            <div>
+                <h3 class="font-display text-lg font-bold text-ink">${escapeHTML(student.name)}</h3>
+                <span class="mt-1 inline-flex rounded-full border border-accent/20 bg-accent/10 px-3 py-1 text-xs font-bold text-accent">متوقف مؤقتًا</span>
+            </div>
+            <button type="button" class="rounded-xl bg-sage px-4 py-2 font-bold text-canvas transition hover:brightness-110" onclick="toggleStudentPause('${student.id}', false)">إعادة للجدول</button>
+            <button type="button" class="rounded-xl border border-danger/30 px-4 py-2 font-bold text-danger transition hover:bg-danger/10" onclick="removeStudent('${student.id}')">حذف مع حفظ الحساب</button>
+        </article>
+    `).join("");
+}
 
-    showMessage(err.message, "حدث خطأ");
+function renderArchivedStudents() {
+    const container = document.getElementById("archivedStudentList");
+    if (!container) return;
 
+    const archivedStudents = students.filter(student => student.deleted_at);
+    if (!archivedStudents.length) {
+        container.innerHTML = '<div class="empty-state rounded-2xl border border-dashed border-line bg-panel/50 p-5 text-center text-muted">الأرشيف فارغ</div>';
+        return;
     }
 
+    container.innerHTML = archivedStudents.map(student => `
+        <article class="student-card flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-line bg-panel-raised p-5 shadow-lg">
+            <div class="min-w-0">
+                <h3 class="font-display text-lg font-bold text-ink">${escapeHTML(student.name)}</h3>
+                <span class="mt-1 inline-flex rounded-full border border-line bg-canvas/40 px-3 py-1 text-xs font-bold text-muted">محفوظ في الأرشيف</span>
+            </div>
+            <button type="button" class="rounded-xl bg-sage px-4 py-2 font-bold text-canvas transition hover:brightness-110" onclick="restoreStudent('${student.id}')">استعادة الطالب</button>
+        </article>
+    `).join("");
+}
+
+function offerMonthlyBackupReminder() {
+    const reminderKey = "tutorScheduleBackupReminderMonth";
+    const monthKey = getLocalDateKey(new Date()).slice(0, 7);
+    try {
+        if (localStorage.getItem(reminderKey) === monthKey) return;
+        localStorage.setItem(reminderKey, monthKey);
+    } catch (error) {
+        setAppStatus(`تعذر حفظ تذكير النسخة الاحتياطية في هذا المتصفح: ${error.message}`, true);
+        return;
+    }
+
+    const modal = document.getElementById("modalRoot");
+    modal.innerHTML = `
+        <div class="overlay fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-canvas/80 p-5 backdrop-blur-md">
+            <div class="modal w-full max-w-md rounded-3xl border border-line bg-panel p-6 shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="backupReminderTitle">
+                <h2 id="backupReminderTitle" class="mb-3 text-center font-display text-2xl font-bold">تذكير النسخة الاحتياطية الشهرية</h2>
+                <p class="mb-5 text-center leading-8 text-muted">احتفظي بنسخة من الطلاب والجلسات وسجلات الحضور على جهازك.</p>
+                <div class="flex flex-wrap gap-3">
+                    <button id="backupReminderDownload" type="button" class="min-w-0 flex-1 rounded-xl bg-accent px-4 py-3 font-bold text-canvas">تنزيل النسخة الآن</button>
+                    <button id="backupReminderLater" type="button" class="min-w-0 flex-1 rounded-xl border border-line px-4 py-3 font-bold text-muted">لاحقًا</button>
+                </div>
+            </div>
+        </div>
+    `;
+    document.getElementById("backupReminderDownload").onclick = () => {
+        closeModal();
+        exportBackup();
+    };
+    document.getElementById("backupReminderLater").onclick = closeModal;
 }
 
 function exportBackup() {
@@ -902,7 +1029,11 @@ function exportBackup() {
         exportedAt: new Date().toISOString(),
         students: students.map(student => ({
             name: student.name,
-            sessions: student.sessions || []
+            sessions: student.sessions || [],
+            is_paused: Boolean(student.is_paused),
+            paused_periods: student.paused_periods || [],
+            archived_periods: student.archived_periods || [],
+            deleted_at: student.deleted_at || null
         }))
     };
     const link = document.createElement("a");
@@ -926,7 +1057,14 @@ async function importBackup(event) {
         if (!await showConfirm(`سيتم إضافة ${backup.students.length} طالب إلى قائمتك الحالية. هل تريد المتابعة؟`, "استيراد نسخة احتياطية")) return;
         setAppStatus("جاري استيراد البيانات...");
         for (const student of backup.students) {
-            await addStudent({ name: String(student.name).trim(), sessions: student.sessions });
+            await addStudent({
+                name: String(student.name).trim(),
+                sessions: student.sessions,
+                is_paused: Boolean(student.is_paused),
+                paused_periods: student.paused_periods || [],
+                archived_periods: student.archived_periods || [],
+                deleted_at: student.deleted_at || null
+            });
         }
         await loadStudents();
         setAppStatus("تم استيراد النسخة الاحتياطية");
@@ -992,11 +1130,11 @@ function createSessionRow(session = {}, sessionIndex = "") {
 
     return `
 
-<div class="session-row" data-session-index="${sessionIndex}">
+<div class="session-row flex flex-wrap items-center gap-3 rounded-xl border border-line bg-canvas/40 p-3" data-session-index="${sessionIndex}">
 
 <button
 type="button"
-class="removeSession" style="width: 52px; min-width: 52px;">
+class="removeSession rounded-lg border border-danger/30 bg-danger/10 px-4 py-2 text-danger transition hover:bg-danger/20" style="width: 52px; min-width: 52px;">
 
 ×
 
@@ -1004,11 +1142,11 @@ class="removeSession" style="width: 52px; min-width: 52px;">
 
 <input
 type="time"
-class="sessionTime"
+class="sessionTime rounded-lg border border-line bg-canvas px-3 py-2 text-center text-ink outline-none focus:border-accent"
 value="${session.time || "09:00"}"
 style="width: 180px; min-width: 180px;">
 
-<select class="sessionDay" style="width: 220px; min-width: 220px; max-width: 100%;">
+<select class="sessionDay rounded-lg border border-line bg-canvas px-3 py-2 text-ink outline-none focus:border-accent" style="width: 220px; min-width: 220px; max-width: 100%;">
 
 ${DAYS.map((day, index) => `
 
@@ -1047,11 +1185,11 @@ function openModal(student = null) {
 
     modal.innerHTML = `
 
-<div class="overlay">
+<div class="overlay fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-canvas/80 p-5 backdrop-blur-md">
 
-<div class="modal">
+<div class="modal w-full max-w-xl rounded-3xl border border-line bg-panel p-6 shadow-2xl">
 
-<h2>
+<h2 class="mb-5 text-center font-display text-2xl font-bold">
 
 ${student ? "تعديل الطالب" : "إضافة طالب"}
 
@@ -1059,7 +1197,7 @@ ${student ? "تعديل الطالب" : "إضافة طالب"}
 
 <form id="studentForm">
 
-<label>
+<label class="mb-2 block text-sm font-bold text-muted">
 
 اسم الطالب
 
@@ -1067,10 +1205,11 @@ ${student ? "تعديل الطالب" : "إضافة طالب"}
 
 <input
 id="studentName"
+class="mb-4 w-full rounded-xl border border-line bg-canvas px-4 py-3 text-ink outline-none focus:border-accent focus:ring-4 focus:ring-accent/10"
 value="${student?.name || ""}"
 required>
 
-<div id="sessionsContainer">
+<div id="sessionsContainer" class="my-4 flex flex-col gap-3">
 
             ${sessions.map((session, index) => createSessionRow(session, student ? index : "")).join("")}
 
@@ -1078,18 +1217,18 @@ required>
 
 <button
 type="button"
-class="btn"
+class="btn w-full rounded-xl border border-dashed border-accent/50 bg-accent/5 px-4 py-3 font-bold text-accent transition hover:bg-accent/10"
 id="addSessionBtn">
 
 + إضافة ميعاد آخر
 
 </button>
 
-<div class="modal-actions">
+<div class="modal-actions mt-5 flex gap-3">
 
 <button
 type="button"
-class="btn"
+class="btn flex-1 rounded-xl border border-line bg-panel-raised px-5 py-3 font-bold text-ink transition hover:border-accent"
 onclick="closeModal()">
 
 إلغاء
@@ -1098,7 +1237,7 @@ onclick="closeModal()">
 
 <button
 type="submit"
-class="btn">
+class="btn flex-1 rounded-xl bg-accent px-5 py-3 font-bold text-canvas transition hover:brightness-110">
 
 ${student ? "حفظ التعديل" : "إضافة"}
 
@@ -1289,6 +1428,7 @@ function checkUpcomingSessions() {
     const dateKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
     const dayIndex = getTodayIndex();
     students.forEach(student => (student.sessions || []).forEach(session => {
+        if (student.is_paused || student.deleted_at || !isStudentAvailableOnDate(student, dateKey)) return;
         const matchesToday = session.date === dateKey || (!session.date && Number(session.day) === dayIndex);
         if (!matchesToday || !session.time) return;
         const [hours, minutes] = String(session.time).split(":").map(Number);

@@ -6,6 +6,13 @@ let monthlySort = "name";
 let attendanceFilter = "all";
 let salaryView = "day";
 let salaryStatusTimer;
+const SESSION_STATUS_LABELS = {
+    pending: "لم يُسجّل",
+    attended: "حضر",
+    absent: "غاب",
+    cancelled: "أُلغيت",
+    postponed: "تأجلت"
+};
 
 const salaryDays = [
     "السبت",
@@ -65,6 +72,7 @@ async function initializeSalary() {
         monthlySort = event.target.value;
         renderMonthlySummary();
     };
+    document.getElementById("exportMonthlyBtn").onclick = exportMonthlyReport;
     document.getElementById("exportMonthlyBtn").onclick = exportMonthlyReport;
     document.querySelectorAll(".view-switch").forEach(button => {
         button.onclick = () => setSalaryView(button.dataset.view);
@@ -142,9 +150,9 @@ function getDailySessions() {
         if (selectedStudentId !== "all" && String(student.id) !== String(selectedStudentId)) return;
         (student.sessions || []).forEach((session, sessionIndex) => {
             if (session.date === dateKey || (!session.date && Number(session.day) === dayIndex)) {
-                const attended = Boolean(session.attendance?.[dateKey]);
-                if (attendanceFilter === "completed" && !attended) return;
-                if (attendanceFilter === "pending" && attended) return;
+                if (!isStudentAvailableOnDate(student, dateKey)) return;
+                const status = getSessionStatus(session, dateKey);
+                if (attendanceFilter !== "all" && status !== attendanceFilter) return;
                 sessions.push({ student, session, sessionIndex, dateKey });
             }
         });
@@ -158,6 +166,7 @@ function renderSalary() {
     const list = document.getElementById("salaryList");
     const dateKey = toDateKey(salaryDate);
     let completed = 0;
+    let absent = 0;
     let total = 0;
 
     document.getElementById("salaryDateTitle").textContent = formatSalaryDate(salaryDate);
@@ -165,47 +174,58 @@ function renderSalary() {
 
     list.innerHTML = "";
     sessions.forEach(item => {
-        const attended = Boolean(item.session.attendance?.[dateKey]);
+        const status = getSessionStatus(item.session, dateKey);
         const price = getSessionPrice(item.session);
-        if (attended) {
+        if (status === "attended") {
             completed++;
             total += price;
         }
+        if (status === "absent") absent++;
 
         const row = document.createElement("article");
-        row.className = `salary-row ${attended ? "is-completed" : "is-pending"}`;
+        row.className = `salary-row ${status === "attended" ? "is-completed" : "is-pending"} grid items-center gap-4 rounded-2xl border border-line bg-panel-raised p-4 shadow-lg transition hover:border-accent/30 md:grid-cols-[minmax(0,1fr)_minmax(0,auto)_minmax(8rem,auto)_auto]`;
         row.innerHTML = `
-            <label class="attendance-control">
-                <input type="checkbox" class="attendance-checkbox" ${attended ? "checked" : ""}>
-                <span class="checkmark">✓</span>
+            <label class="attendance-control flex items-center gap-3">
+                <span class="checkmark ${status === "attended" ? "border-sage bg-sage text-canvas" : status === "absent" ? "border-danger text-danger" : "border-line text-muted"} grid h-8 w-8 shrink-0 place-items-center rounded-full border-2 font-bold">${status === "attended" ? "✓" : status === "absent" ? "!" : "·"}</span>
                 <span>
-                    <strong>${escapeHTML(item.student.name)}</strong>
-                    <small>${formatTime(item.session.time)}${item.session.extra ? " · جلسة إضافية" : ""}</small>
+                    <strong class="font-display font-bold text-ink">${escapeHTML(item.student.name)}</strong>
+                    <small class="mt-1 block text-sm text-accent">${formatTime(item.session.time)}${item.session.extra ? " · جلسة إضافية" : ""}</small>
                 </span>
             </label>
-            <label class="price-control">
+            <label class="session-status-control flex min-w-32 flex-col gap-1 text-sm text-muted">
+                <span>حالة الجلسة</span>
+                <select class="session-status rounded-lg border border-line bg-canvas px-3 py-2 text-ink">
+                    ${Object.entries(SESSION_STATUS_LABELS).map(([value, label]) => `<option value="${value}" ${status === value ? "selected" : ""}>${label}</option>`).join("")}
+                </select>
+            </label>
+            <label class="price-control flex items-center gap-2 text-sm text-muted">
                 <span>السعر</span>
-                <input class="session-price" type="number" min="0" step="10" value="${price}" inputmode="decimal">
+                <input class="session-price rounded-lg border border-line bg-canvas px-3 py-2 text-center text-ink" type="number" min="0" step="10" value="${price}" inputmode="decimal">
                 <span>ج.م</span>
             </label>
-            <button class="icon-btn save-salary" type="button">حفظ</button>
+            <button class="icon-btn save-salary rounded-lg border border-accent/30 px-4 py-2 font-bold text-accent transition hover:bg-accent/10" type="button">حفظ</button>
         `;
 
-        row.querySelector(".attendance-checkbox").onchange = () => saveSalaryEntry(item, row);
+        row.querySelector(".session-status").onchange = () => saveSalaryEntry(item, row);
         row.querySelector(".save-salary").onclick = () => saveSalaryEntry(item, row);
         list.appendChild(row);
     });
 
     document.getElementById("completedSessionsStat").textContent = completed;
+    document.getElementById("absentSessionsStat").textContent = absent;
     document.getElementById("dailyTotalStat").textContent = `${total.toLocaleString("ar-EG")} ج.م`;
 
     if (sessions.length === 0) {
-        const message = attendanceFilter === "completed"
+        const message = attendanceFilter === "attended"
             ? "لا توجد جلسات تم حضورها بهذا الفلتر"
-            : attendanceFilter === "pending"
-                ? "ممتاز، لا توجد جلسات معلقة بهذا الفلتر"
+            : attendanceFilter === "absent"
+                ? "لا توجد جلسات مسجلة كغياب بهذا الفلتر"
+                : attendanceFilter === "cancelled"
+                    ? "لا توجد جلسات ملغاة بهذا الفلتر"
+                    : attendanceFilter === "postponed"
+                        ? "لا توجد جلسات مؤجلة بهذا الفلتر"
                 : "لا توجد جلسات مجدولة لهذا اليوم";
-        list.innerHTML = `<div class="empty empty-state"><strong>${message}</strong><small>يمكنك إضافة جلسة إضافية من القسم بالأسفل</small></div>`;
+        list.innerHTML = `<div class="empty empty-state rounded-2xl border border-dashed border-line bg-panel/50 p-7 text-center text-muted"><strong>${message}</strong><small class="mt-2 block text-muted">يمكنك إضافة جلسة إضافية من القسم بالأسفل</small></div>`;
     }
 
     renderMonthlySummary();
@@ -228,9 +248,17 @@ async function addExtraSession(event) {
         time,
         price,
         extra: true,
-        attendance: { [dateKey]: true }
+        attendance: { [dateKey]: "attended" }
     };
-    const existingStudent = salaryStudents.find(student => student.name.trim().toLocaleLowerCase() === name.toLocaleLowerCase());
+    const existingStudent = salaryStudents.find(student =>
+        !student.deleted_at && student.name.trim().toLocaleLowerCase() === name.toLocaleLowerCase()
+    );
+    if (existingStudent?.is_paused) {
+        submitButton.disabled = false;
+        submitButton.textContent = "إضافة وحساب الجلسة";
+        showSalaryStatus("هذا الطالب متوقف مؤقتًا، أعيديه للجدول قبل إضافة جلسة");
+        return;
+    }
 
     try {
         if (existingStudent) {
@@ -258,20 +286,25 @@ async function addExtraSession(event) {
 function renderMonthlySummary() {
     const container = document.getElementById("monthlySummary");
     if (!container) return;
-    const summaries = getMonthlySummaries(salaryMonth);
+    const allSummaries = getMonthlySummaries(salaryMonth);
+    const summaries = allSummaries.filter(row =>
+        selectedStudentId === "all" || String(row.id) === String(selectedStudentId)
+    );
     const monthTotal = summaries.reduce((sum, row) => sum + row.total, 0);
     const rows = summaries
-        .filter(row => selectedStudentId === "all" || String(row.id) === String(selectedStudentId))
         .sort((a, b) => monthlySort === "total" ? b.total - a.total : monthlySort === "count" ? b.count - a.count : a.name.localeCompare(b.name, "ar"))
-        .map(row => `<div class="monthly-row"><strong>${escapeHTML(row.name)}</strong><span>${row.count} جلسة</span><b>${row.total.toLocaleString("ar-EG")} ج.م</b></div>`)
+        .map(row => `<div class="monthly-row grid items-center gap-3 border-b border-line px-4 py-3"><strong class="font-bold text-ink">${escapeHTML(row.name)}</strong><span class="text-sm text-muted">حضر ${row.count} · غاب ${row.absent} · أُلغي ${row.cancelled} · تأجل ${row.postponed} · دون تسجيل ${row.pending}</span><b class="font-display font-bold text-accent">${row.total.toLocaleString("ar-EG")} ج.م</b></div>`)
         .join("");
 
     const completedSessions = summaries.reduce((sum, row) => sum + row.count, 0);
     const averagePrice = completedSessions ? Math.round(monthTotal / completedSessions) : 0;
+    const previousSummaries = getMonthlySummaries(new Date(salaryMonth.getFullYear(), salaryMonth.getMonth() - 1, 1))
+        .filter(row => selectedStudentId === "all" || String(row.id) === String(selectedStudentId));
+    const previousTotal = previousSummaries.reduce((sum, row) => sum + row.total, 0);
     container.innerHTML = rows
-        ? `<div class="monthly-total"><span>إجمالي الشهر</span><strong>${monthTotal.toLocaleString("ar-EG")} ج.م</strong><small>${completedSessions} جلسة · متوسط ${averagePrice.toLocaleString("ar-EG")} ج.م</small></div>${rows}`
-        : '<div class="empty empty-state">لا يوجد طلاب حتى الآن</div>';
-    renderMonthComparison(monthTotal);
+        ? `<div class="monthly-total rounded-t-2xl border-b border-accent/20 bg-accent/5 p-5"><span class="text-muted">إجمالي الشهر</span><strong class="my-1 block font-display text-3xl font-bold text-accent">${monthTotal.toLocaleString("ar-EG")} ج.م</strong><small class="text-sm text-muted">${completedSessions} جلسة حاضرة · متوسط ${averagePrice.toLocaleString("ar-EG")} ج.م · ${summaries.reduce((sum, row) => sum + row.absent, 0)} غياب · ${summaries.reduce((sum, row) => sum + row.cancelled, 0)} إلغاء · ${summaries.reduce((sum, row) => sum + row.postponed, 0)} تأجيل</small></div>${rows}`
+        : '<div class="empty empty-state rounded-2xl border border-dashed border-line bg-panel/50 p-7 text-center text-muted">لا يوجد طلاب حتى الآن</div>';
+    renderMonthComparison(monthTotal, previousTotal);
     renderMonthlyCalendar();
 }
 
@@ -283,7 +316,7 @@ function renderMonthlyCalendar() {
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const firstDayIndex = getDateDayIndex(new Date(year, month, 1));
     const cells = [];
-    for (let index = 0; index < firstDayIndex; index++) cells.push('<div class="calendar-day is-empty"></div>');
+    for (let index = 0; index < firstDayIndex; index++) cells.push('<div class="calendar-day is-empty min-h-12 rounded-lg"></div>');
     for (let day = 1; day <= daysInMonth; day++) {
         const date = new Date(year, month, day);
         const dateKey = toDateKey(date);
@@ -292,12 +325,12 @@ function renderMonthlyCalendar() {
         salaryStudents.forEach(student => (student.sessions || []).forEach(session => {
             if (selectedStudentId !== "all" && String(student.id) !== String(selectedStudentId)) return;
             const matches = session.date === dateKey || (!session.date && Number(session.day) === getDateDayIndex(date));
-            if (!matches) return;
+            if (!matches || !isStudentAvailableOnDate(student, dateKey)) return;
             scheduled++;
-            if (session.attendance?.[dateKey]) completed++;
+            if (getSessionStatus(session, dateKey) === "attended") completed++;
         }));
-        const classes = ["calendar-day", completed ? "has-completed" : "", scheduled && !completed ? "has-pending" : ""].filter(Boolean).join(" ");
-        cells.push(`<div class="${classes}"><b>${day}</b>${scheduled ? `<small>${completed}/${scheduled}</small>` : ""}</div>`);
+        const classes = ["calendar-day", completed ? "has-completed" : "", scheduled && !completed ? "has-pending" : "", "min-h-12 rounded-lg border border-line bg-panel-raised p-1 text-center transition hover:border-accent/40"].filter(Boolean).join(" ");
+        cells.push(`<div class="${classes}"><b class="font-bold text-ink">${day}</b>${scheduled ? `<small class="mt-1 block text-xs text-muted">${completed}/${scheduled}</small>` : ""}</div>`);
     }
     calendar.innerHTML = `<div class="calendar-heading">${salaryMonth.toLocaleDateString("ar-EG", { month: "long", year: "numeric" })}</div><div class="calendar-weekdays">${salaryDays.map(day => `<span>${day.slice(0, 3)}</span>`).join("")}</div><div class="calendar-grid">${cells.join("")}</div>`;
 }
@@ -309,31 +342,34 @@ function getMonthlySummaries(date) {
     const daysInMonth = new Date(year, month + 1, 0).getDate();
 
     return salaryStudents.map(student => {
-        let count = 0;
-        let total = 0;
+        const summary = { id: student.id, name: student.name, count: 0, total: 0, absent: 0, cancelled: 0, postponed: 0, pending: 0 };
+        const addSession = (session, dateKey) => {
+            if (!isStudentAvailableOnDate(student, dateKey)) return;
+            const status = getSessionStatus(session, dateKey);
+            if (status === "attended") {
+                summary.count++;
+                summary.total += getSessionPrice(session);
+            } else {
+                summary[status]++;
+            }
+        };
         (student.sessions || []).forEach(session => {
             if (session.date) {
-                if (session.date.startsWith(monthKey) && session.attendance?.[session.date]) {
-                    count++;
-                    total += getSessionPrice(session);
-                }
+                if (session.date.startsWith(monthKey)) addSession(session, session.date);
                 return;
             }
             for (let day = 1; day <= daysInMonth; day++) {
                 const dateKey = toDateKey(new Date(year, month, day));
-                if (Number(session.day) === getDateDayIndex(new Date(year, month, day)) && session.attendance?.[dateKey]) {
-                    count++;
-                    total += getSessionPrice(session);
+                if (Number(session.day) === getDateDayIndex(new Date(year, month, day))) {
+                    addSession(session, dateKey);
                 }
             }
         });
-        return { id: student.id, name: student.name, count, total };
+        return summary;
     });
 }
 
-function renderMonthComparison(currentTotal) {
-    const previousMonth = new Date(salaryMonth.getFullYear(), salaryMonth.getMonth() - 1, 1);
-    const previousTotal = getMonthlySummaries(previousMonth).reduce((sum, row) => sum + row.total, 0);
+function renderMonthComparison(currentTotal, previousTotal) {
     const difference = currentTotal - previousTotal;
     const direction = difference > 0 ? "زيادة" : difference < 0 ? "نقصان" : "بدون تغيير";
     document.getElementById("monthComparison").innerHTML = `الشهر السابق: <strong>${previousTotal.toLocaleString("ar-EG")} ج.م</strong> · ${direction}: <strong>${Math.abs(difference).toLocaleString("ar-EG")} ج.م</strong>`;
@@ -342,7 +378,12 @@ function renderMonthComparison(currentTotal) {
 function exportMonthlyReport() {
     const rows = getMonthlySummaries(salaryMonth)
         .filter(row => selectedStudentId === "all" || String(row.id) === String(selectedStudentId));
-    const csv = ["الطالب,عدد الجلسات,الإجمالي (ج.م)", ...rows.map(row => `"${row.name.replace(/"/g, '""')}",${row.count},${row.total}`)].join("\n");
+    const csv = [
+        "الطالب,حضور,غياب,إلغاء,تأجيل,دون تسجيل,الإجمالي (ج.م)",
+        ...rows.map(row => [
+            row.name, row.count, row.absent, row.cancelled, row.postponed, row.pending, row.total
+        ].map(value => `"${String(value).replace(/"/g, '""')}"`).join(","))
+    ].join("\n");
     const link = document.createElement("a");
     link.href = URL.createObjectURL(new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" }));
     link.download = `salary-${toMonthKey(salaryMonth)}.csv`;
@@ -351,13 +392,13 @@ function exportMonthlyReport() {
 }
 
 async function saveSalaryEntry(item, row) {
-    const checkbox = row.querySelector(".attendance-checkbox");
     const priceInput = row.querySelector(".session-price");
     const saveButton = row.querySelector(".save-salary");
     const updatedSessions = (item.student.sessions || []).map(session => ({ ...session }));
     const updatedSession = { ...updatedSessions[item.sessionIndex] };
     const attendance = { ...(updatedSession.attendance || {}) };
-    attendance[item.dateKey] = checkbox.checked;
+    const status = row.querySelector(".session-status").value;
+    attendance[item.dateKey] = status;
     updatedSession.attendance = attendance;
     updatedSession.price = Math.max(0, Number(priceInput.value) || 0);
     updatedSessions[item.sessionIndex] = updatedSession;
