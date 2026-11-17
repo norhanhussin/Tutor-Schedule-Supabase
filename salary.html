@@ -23,7 +23,7 @@
             <a class="rounded-xl bg-accent px-4 py-2 font-bold text-canvas" href="salary.html" aria-current="page">حساب السالاري</a>
         </nav>
 
-        <section class="salary-toolbar salary-daily-item flex flex-wrap items-center justify-center gap-3" aria-label="اختيار التاريخ">
+        <section class="salary-toolbar salary-daily-item" aria-label="اختيار التاريخ">
             <button class="icon-btn" id="previousDateBtn" type="button">اليوم السابق</button>
             <input id="salaryDate" type="date" aria-label="تاريخ الحساب">
             <button class="icon-btn" id="nextDateBtn" type="button">اليوم التالي</button>
@@ -43,7 +43,7 @@
             <div class="stat-card rounded-2xl border border-line bg-panel px-5 py-4 shadow-xl"><span class="stat-label text-muted">إجمالي اليوم</span><strong class="stat-value font-display text-accent" id="dailyTotalStat">0 ج.م</strong></div>
         </section>
 
-        <section class="salary-tools salary-daily-item flex flex-wrap items-end gap-3">
+        <section class="salary-tools salary-daily-item">
             <label>عرض الطالب
                 <select id="studentFilter"><option value="all">كل الطلاب</option></select>
             </label>
@@ -83,7 +83,7 @@
 
         <section class="monthly-section salary-monthly-item mt-8">
             <div class="section-title font-display font-bold"><span class="dot"></span>حساب الشهر</div>
-            <div class="month-toolbar flex items-center gap-3">
+            <div class="month-toolbar">
                 <label for="salaryMonth">الشهر</label>
                 <input id="salaryMonth" type="month" aria-label="شهر الحساب">
             </div>
